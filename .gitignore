@@ -1,0 +1,11 @@
+dist
+node_modules
+.idea
+npm-debug.log
+out
+lib
+data
+public/bundle.css
+public/bundle.js
+public/bundle.js.map
+devServer.bundle.js
