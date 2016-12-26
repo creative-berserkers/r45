@@ -235,8 +235,8 @@ const io = socketIO(server);
 
 io.on('connection', onSocket.bind(undefined, io));
 
-server.listen(3000, 'localhost', function (err) {
+server.listen(8080, 'localhost', function (err) {
   if (err) log.error(err);else {
-    log.info('Listening at http://localhost:3000');
+    log.info('Listening at http://localhost:8080');
   }
 });
