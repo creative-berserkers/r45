@@ -13,6 +13,9 @@
     "lint": "eslint src",
     "test": "find ./src -name '*.spec.js' | xargs mocha  --compilers js:babel-core/register --require babelhook --reporter spec"
   },
+  "engines": {
+    "node": "7.3.0"
+  },
   "keywords": [],
   "author": "Krzysztof Kabat (https://github.com/Odrinwhite)",
   "license": "CC0-1.0",
