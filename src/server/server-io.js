@@ -37,7 +37,7 @@ export default function onSocket(io, socket){
       type: 'CONTEXT_SPAWNED',
       id: clientSocketIdToGuid[socket.id]
     })
-    socket.send('initial_state', store.getState().contexts[authToken].shared)
+    socket.emit('initial_state', store.getState().contexts[authToken].shared)
   })
 
   socket.on('disconnect', function() {
@@ -57,7 +57,7 @@ export default function onSocket(io, socket){
     chatActionHandler(store.getState(), {
       type: action.type,
       command: action.command,
-      id : clientSocketIdToGuid[socket.id]
+      origin : clientSocketIdToGuid[socket.id]
     }, (action)=>{
       log.info(`dispatching ${JSON.stringify(action)}`)
       const stateBeforeRequest = store.getState()
@@ -69,7 +69,7 @@ export default function onSocket(io, socket){
         const targetSocket = clientGuidToSocket[key]
         if(stateChanged){
           log.info(`After ${action.type} state for ${key} changed, sending action`)
-          targetSocket.send('action', action)
+          targetSocket.emit('action', action)
         } else {
           log.info(`After ${action.type} state for ${key} is same`)
         }

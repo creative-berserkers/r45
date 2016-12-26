@@ -1,3 +1,4 @@
+import {guid} from '../utils'
 
 export default function(state, action, dispatch){
   const fullCommand = action.command
@@ -14,7 +15,8 @@ export default function(state, action, dispatch){
   switch(command){
     case '/say' : dispatch({
       type : 'SAY',
-      id : action.id,
+      id : guid(),
+      from: action.origin,
       to: 'all',
       message : args.join(' ')
     })

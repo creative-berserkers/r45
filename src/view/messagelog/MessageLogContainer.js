@@ -39,7 +39,7 @@ class MessageLogContainer extends React.Component {
 
     return <div className={`${this.props.className} ${css.messageLogContainer}`}>
         <div key="list" className={css.messageLogContainerList}>
-          { messages.map((message)=>{ return <div key={message.id}>{message.text}</div> }) }
+          { messages.map((message)=>{ return <div key={message.id}>{message.from}:{message.message}</div> }) }
         </div>
         <input key="input" className={css.messageLogContainerInput} ref="chatInput" onKeyUp={handleKeyboard}></input>
         <button key="send" className={css.messageLogContainerSend} onClick={handleClick} >Send</button>
@@ -55,9 +55,9 @@ const mapDispatchToProps = function(dispatch) {
   }
 }
 
-const mapStateToProps = function(store) {
+const mapStateToProps = function(state) {
   return {
-    messages: store.messages
+    messages: state.messages
   }
 }
 

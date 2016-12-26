@@ -1,8 +1,5 @@
-const initialState = {
-  messages: [{id:"1",text: 'test message 1'}, {id:"2",text: 'test message 2'}]
-}
+import contextReducer from './context-reducer'
+import globalReducer from './global-reducer'
 
-export default function rootReducer(state = initialState, action){
-  console.log(state, action);
-  return state;
-}
+export {globalReducer, contextReducer}
+

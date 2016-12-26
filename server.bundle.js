@@ -29,22 +29,13 @@ var log = {
   }
 };
 
-const initialState$1 = {
-  messages: []
-};
+function s4() {
+  return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+}
 
-function contextReducer(state = initialState$1, action) {
-  switch (action.type) {
-    case 'SAY':
-      return Object.assign({}, state, {
-        messages: state.messages.concat({
-          from: action.id,
-          message: action.message
-        })
-      });
-    default:
-      return state;
-  }
+function guid() {
+
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 }
 
 function shallowEqual(oldState, newState) {
@@ -62,6 +53,33 @@ function shallowEqual(oldState, newState) {
 function changed(oldState, newState) {
 
   return shallowEqual(oldState, newState) ? oldState : newState;
+}
+
+const initialState$1 = {
+  messages: [{
+    id: guid(),
+    from: 'Chat System',
+    to: 'all',
+    message: 'Welcome to chat'
+  }]
+};
+
+function contextReducer(state = initialState$1, action) {
+  switch (action.type) {
+    case 'SAY':
+      return Object.assign({}, state, {
+        messages: state.messages.concat({
+          id: action.id,
+          from: action.from,
+          to: action.to,
+          message: action.message
+        })
+      });
+    case 'LOAD_CLIENT_STATE':
+      return action.state;
+    default:
+      return state;
+  }
 }
 
 const initialState = {
@@ -123,7 +141,8 @@ var chatActionHandler = function (state, action, dispatch) {
     case '/say':
       dispatch({
         type: 'SAY',
-        id: action.id,
+        id: guid(),
+        from: action.origin,
         to: 'all',
         message: args.join(' ')
       });
@@ -162,7 +181,7 @@ function onSocket(io, socket) {
       type: 'CONTEXT_SPAWNED',
       id: clientSocketIdToGuid[socket.id]
     });
-    socket.send('initial_state', store.getState().contexts[authToken].shared);
+    socket.emit('initial_state', store.getState().contexts[authToken].shared);
   });
 
   socket.on('disconnect', function () {
@@ -182,7 +201,7 @@ function onSocket(io, socket) {
     chatActionHandler(store.getState(), {
       type: action.type,
       command: action.command,
-      id: clientSocketIdToGuid[socket.id]
+      origin: clientSocketIdToGuid[socket.id]
     }, action => {
       log.info(`dispatching ${ JSON.stringify(action) }`);
       const stateBeforeRequest = store.getState();
@@ -194,7 +213,7 @@ function onSocket(io, socket) {
         const targetSocket = clientGuidToSocket[key];
         if (stateChanged) {
           log.info(`After ${ action.type } state for ${ key } changed, sending action`);
-          targetSocket.send('action', action);
+          targetSocket.emit('action', action);
         } else {
           log.info(`After ${ action.type } state for ${ key } is same`);
         }
