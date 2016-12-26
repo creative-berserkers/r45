@@ -5,10 +5,10 @@
   "scripts": {
     "build:client": "node_modules/.bin/rollup -c rollup.client.config.js",
     "build:server": "node_modules/.bin/rollup -c rollup.server.config.js",
-    "build:all": "npm run build:client && npm run build:server",
-    "watch:client": "node_modules/.bin/nodemon --watch src -e js,css --exec \"npm run build:client\"",
-    "watch:server": "node_modules/.bin/nodemon --watch src/server --watch src/model --watch src/action-handlers -e js --exec \"npm run build:server && node server.bundle.js \"",
-    "start": "npm run build:all & node server.bundle.js",
+    "build:all": "yarn run build:client && yarn run build:server",
+    "watch:client": "node_modules/.bin/nodemon --watch src -e js,css --exec \"yarn run build:client\"",
+    "watch:server": "node_modules/.bin/nodemon --watch src/server --watch src/model --watch src/action-handlers -e js --exec \"yarn run build:server && node server.bundle.js \"",
+    "start": "yarn run build:all & node server.bundle.js",
     "debug": "node --inspect server.bundle.js",
     "lint": "eslint src",
     "test": "find ./src -name '*.spec.js' | xargs mocha  --compilers js:babel-core/register --require babelhook --reporter spec"
