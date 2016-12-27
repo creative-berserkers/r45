@@ -233,6 +233,7 @@ function onSocket(io, socket) {
 }
 
 const app = express();
+const host = '0.0.0.0';
 const port = process.env.PORT || 8080;
 
 app.use('/static', express.static('public'));
@@ -246,8 +247,8 @@ const io = socketIO(server);
 
 io.on('connection', onSocket.bind(undefined, io));
 
-server.listen(port, 'localhost', function (err) {
+server.listen(port, host, function (err) {
   if (err) log.error(err);else {
-    log.info(`Listening at http://localhost:${ port }`);
+    log.info(`Listening at http://${ host }:${ port }`);
   }
 });
