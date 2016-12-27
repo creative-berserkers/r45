@@ -19,9 +19,9 @@ const io = socketIO(server)
 
 io.on('connection', serverIO.bind(undefined, io))
 
-server.listen(8080, 'localhost', function(err) {
+server.listen(80, 'localhost', function(err) {
   if (err) log.error(err)
   else {
-    log.info('Listening at http://localhost:8080')
+    log.info('Listening at http://localhost')
   }
 })
