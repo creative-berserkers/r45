@@ -18,7 +18,7 @@ app.get('/favicon.ico', function(req, res) {
   res.sendFile(path.join(process.env.PWD, 'public/favicon.ico'))
 })
 
-app.get('*', function(req, res) {
+app.get('/', function(req, res) {
   res.sendFile(path.join(process.env.PWD, 'public/index.html'))
 })
 
