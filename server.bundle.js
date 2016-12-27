@@ -160,7 +160,6 @@ let stateStr = '{}';
 try {
   stateStr = fs.readFileSync(stateFilePath, 'utf8');
 } catch (e) {
-  log.error('Problem with reading state file', e);
   fs.writeFileSync(stateFilePath, '{}', { flag: 'wx' });
 }
 
