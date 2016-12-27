@@ -10,10 +10,12 @@ const app = express()
 const host = '0.0.0.0'
 const port = process.env.PORT || 8080
 
+process.env.PWD = process.cwd()
+
 app.use('/static', express.static('public'))
 
 app.get('*', function(req, res) {
-  res.sendFile(path.join(__dirname, 'public/index.html'))
+  res.sendFile(path.join(process.env.PWD, 'public/index.html'))
 })
 
 const server = http.createServer(app)
