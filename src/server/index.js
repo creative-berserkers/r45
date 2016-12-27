@@ -12,14 +12,14 @@ const port = process.env.PORT || 8080
 
 process.env.PWD = process.cwd()
 
-app.use('/static', express.static('public'))
-
-app.get('/', function(req, res) {
-  res.sendFile(path.join(process.env.PWD, 'public/index.html'))
-})
+app.use('/static', express.static(path.join(process.env.PWD, 'public')))
 
 app.get('/favicon.ico', function(req, res) {
   res.sendFile(path.join(process.env.PWD, 'public/favicon.ico'))
+})
+
+app.get('*', function(req, res) {
+  res.sendFile(path.join(process.env.PWD, 'public/index.html'))
 })
 
 const server = http.createServer(app)
