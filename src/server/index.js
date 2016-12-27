@@ -14,8 +14,12 @@ process.env.PWD = process.cwd()
 
 app.use('/static', express.static('public'))
 
-app.get('*', function(req, res) {
+app.get('/', function(req, res) {
   res.sendFile(path.join(process.env.PWD, 'public/index.html'))
+})
+
+app.get('/favicon.ico', function(req, res) {
+  res.sendFile(path.join(process.env.PWD, 'public/favicon.ico'))
 })
 
 const server = http.createServer(app)
