@@ -6,10 +6,10 @@ import replace from 'rollup-plugin-replace'
 import modular from 'modular-css/rollup'
 
 let includePathOptions = {
-    include: {},
-    paths: ['src'],
-    external: [],
-    extensions: ['.js']
+  include: {},
+  paths: ['src'],
+  external: [],
+  extensions: ['.js']
 };
 
 export default {
@@ -17,7 +17,7 @@ export default {
   format: 'iife',
   plugins: [
     modular({
-      css : "public/bundle.css"
+      css : 'public/css/bundle.css'
     }),
     babel({
       exclude: 'node_modules/**',
@@ -31,24 +31,19 @@ export default {
       jsnext: true,
       main: true
     }),
-
-    /*commonjs({
-      include: 'node_modules/**',
-      sourceMap: false
-    })*/
   ],
   sourceMap: false,
-  dest: 'public/bundle.js',
+  dest: 'public/js/bundle.js',
   external: [
-      'react-dom',
-      'react',
-      'react-redux',
-      'redux'
+    'react-dom',
+    'react',
+    'react-redux',
+    'redux'
   ],
   globals: {
-      react: 'React',
-      'react-redux':'ReactRedux',
-      'react-dom':'ReactDOM',
-      'redux': 'Redux'
+    react: 'React',
+    'react-redux':'ReactRedux',
+    'react-dom':'ReactDOM',
+    'redux': 'Redux'
   }
-};
+}

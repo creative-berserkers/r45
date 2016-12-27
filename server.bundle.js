@@ -238,7 +238,7 @@ const port = process.env.PORT || 8080;
 
 process.env.PWD = process.cwd();
 
-app.use('/static', express.static(path.join(process.env.PWD, 'public')));
+app.use('/public', express.static(path.join(process.env.PWD, 'public')));
 
 app.get('/favicon.ico', function (req, res) {
   res.sendFile(path.join(process.env.PWD, 'public/favicon.ico'));
