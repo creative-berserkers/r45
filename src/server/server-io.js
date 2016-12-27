@@ -6,9 +6,20 @@ import log from './log'
 import {shallowEqual} from './utils'
 
 const Redux = require('redux')
+const dataDirPath = path.join(__dirname, 'data')
 const stateFilePath = path.join(__dirname, 'data/state.json')
 
-let stateStr = fs.readFileSync(stateFilePath, 'utf8')
+if (!fs.existsSync(dataDirPath)){
+  fs.mkdirSync(dataDirPath)
+}
+let stateStr = '{}'
+try {
+  stateStr = fs.readFileSync(stateFilePath, 'utf8')
+} catch(e) {
+  log.error('Problem with reading state file',e)
+  fs.writeFileSync(stateFilePath, '{}', { flag: 'wx' })
+}
+
 if(stateStr.trim().length === 0) stateStr = '{}'
 const store = Redux.createStore(globalReducer, JSON.parse(stateStr))
 

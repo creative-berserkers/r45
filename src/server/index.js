@@ -7,6 +7,7 @@ import log from './log'
 import serverIO from './server-io'
 
 const app = express()
+const port = process.env.PORT || 8080
 
 app.use('/static', express.static('public'))
 
@@ -19,9 +20,9 @@ const io = socketIO(server)
 
 io.on('connection', serverIO.bind(undefined, io))
 
-server.listen(80, 'localhost', function(err) {
+server.listen(port, 'localhost', function(err) {
   if (err) log.error(err)
   else {
-    log.info('Listening at http://localhost')
+    log.info(`Listening at http://localhost:${port}`)
   }
 })

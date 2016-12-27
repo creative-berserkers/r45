@@ -150,9 +150,20 @@ var chatActionHandler = function (state, action, dispatch) {
 };
 
 const Redux = require('redux');
+const dataDirPath = path.join(__dirname, 'data');
 const stateFilePath = path.join(__dirname, 'data/state.json');
 
-let stateStr = fs.readFileSync(stateFilePath, 'utf8');
+if (!fs.existsSync(dataDirPath)) {
+  fs.mkdirSync(dataDirPath);
+}
+let stateStr = '{}';
+try {
+  stateStr = fs.readFileSync(stateFilePath, 'utf8');
+} catch (e) {
+  log.error('Problem with reading state file', e);
+  fs.writeFileSync(stateFilePath, '{}', { flag: 'wx' });
+}
+
 if (stateStr.trim().length === 0) stateStr = '{}';
 const store = Redux.createStore(globalReducer, JSON.parse(stateStr));
 
@@ -223,6 +234,7 @@ function onSocket(io, socket) {
 }
 
 const app = express();
+const port = process.env.PORT || 8080;
 
 app.use('/static', express.static('public'));
 
@@ -235,8 +247,8 @@ const io = socketIO(server);
 
 io.on('connection', onSocket.bind(undefined, io));
 
-server.listen(8080, 'localhost', function (err) {
+server.listen(port, 'localhost', function (err) {
   if (err) log.error(err);else {
-    log.info('Listening at http://localhost:8080');
+    log.info(`Listening at http://localhost:${ port }`);
   }
 });
