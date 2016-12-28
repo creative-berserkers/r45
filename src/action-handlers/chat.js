@@ -16,7 +16,7 @@ export default function(state, action, dispatch){
     case '/say' : dispatch({
       type : 'SAY',
       id : guid(),
-      from: action.origin,
+      from: action.guid,
       to: 'all',
       message : args.join(' ')
     })

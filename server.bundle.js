@@ -56,6 +56,7 @@ function changed(oldState, newState) {
 }
 
 const initialState$1 = {
+  actionState: [],
   messages: [{
     id: guid(),
     from: 'Chat System',
@@ -66,6 +67,14 @@ const initialState$1 = {
 
 function contextReducer(state = initialState$1, action) {
   switch (action.type) {
+    case 'CLIENT_STATE_ENTER_PUSH':
+      return Object.assign({}, state, {
+        actionState: state.actionState.concat(action.name)
+      });
+    case 'CLIENT_STATE_ENTER_REPLACE':
+      return Object.assign({}, state, {
+        actionState: state.actionState.slice(0, state.actionState.length - 1).concat(action.name)
+      });
     case 'SAY':
       return Object.assign({}, state, {
         messages: state.messages.concat({
@@ -109,9 +118,9 @@ function clientContextReducer(state = initialState, action) {
 function allContextsReducer(state = {}, action) {
   switch (action.type) {
     case 'CONTEXT_SPAWNED':
-      return Object.assign({}, state, { [action.id]: clientContextReducer(state[action.id], action) });
+      return Object.assign({}, state, { [action.guid]: clientContextReducer(state[action.guid], action) });
     case 'CONTEXT_DESPAWNED':
-      return Object.assign({}, state, { [action.id]: clientContextReducer(state[action.id], action) });
+      return Object.assign({}, state, { [action.guid]: clientContextReducer(state[action.guid], action) });
     default:
       return changed(state, Object.keys(state).reduce((newState, context) => {
         newState[context] = clientContextReducer(state[context], action);
@@ -124,34 +133,85 @@ var globalReducer = redux.combineReducers({
   contexts: allContextsReducer
 });
 
-var chatActionHandler = function (state, action, dispatch) {
-  const fullCommand = action.command;
-  if (fullCommand.size > 1024) return;
-  let command,
-      args = [];
-  const commandSegments = fullCommand.split(' ');
-  if (fullCommand.startsWith('/')) {
-    [command, ...args] = commandSegments;
-  } else {
-    command = '/say';
-    args = commandSegments;
-  }
-
-  switch (command) {
-    case '/say':
-      dispatch({
-        type: 'SAY',
-        id: guid(),
-        from: action.origin,
-        to: 'all',
-        message: args.join(' ')
-      });
+var introduction = {
+  onEnter: (guid, state, dispatch) => {
+    log.info('entering state INTRODUCTION');
+  },
+  onLeave: (guid, state, dispatch) => {
+    log.info('leaving state INTRODUCTION');
+  },
+  onCommand: (guid, state, dispatch, command) => {
+    log.info(`in state INTRODUCTION guid:${ guid } command:${ command }`);
   }
 };
 
-const Redux = require('redux');
+
+
+var actionStateHandlers = Object.freeze({
+	introduction: introduction
+});
+
+function serverMiddleware({ getState, dispatch }) {
+  return next => action => {
+    if (action.type === 'CONTEXT_SPAWNED') {
+      if (getState().contexts[action.guid].shared.actionState.length === 0) {
+        dispatch({
+          type: 'CLIENT_STATE_ENTER_PUSH',
+          guid: action.guid,
+          name: 'introduction'
+        });
+      }
+    } else if (action.type === 'CLIENT_STATE_ENTER_PUSH' || action.type === 'CLIENT_STATE_ENTER_REPLACE') {
+      const prevActionState = getState().contexts[action.guid].shared.actionState;
+      if (prevActionState.length > 0) {
+        const name = prevActionState[prevActionState.length - 1];
+        actionStateHandlers[name].onLeave(action.guid, getState(), dispatch);
+      }
+      const result = next(action);
+      const currActionState = getState().contexts[action.guid].shared.actionState;
+      if (currActionState.length > 0) {
+        const name = currActionState[currActionState.length - 1];
+        actionStateHandlers[name].onEnter(action.guid, getState(), dispatch);
+      }
+      return result;
+    } else if (action.type === 'COMMAND_REQUEST') {
+      const currActionState = getState().contexts[action.guid].shared.actionState;
+      if (currActionState.length > 0) {
+        const name = currActionState[currActionState.length - 1];
+        actionStateHandlers[name].onCommand(action.guid, getState(), dispatch, action.command);
+      }
+    } else {
+      return next(action);
+    }
+  };
+}
+
+function serverMiddleware$1(clientGuidToSocket, { getState, dispatch }) {
+  return next => action => {
+    log.info(`Action ${ JSON.stringify(action) }`);
+    const stateBeforeRequest = getState();
+    const result = next(action);
+    const stateAfterRequest = getState();
+    Object.keys(stateBeforeRequest.contexts).forEach(key => {
+
+      const stateChanged = !shallowEqual(stateBeforeRequest.contexts[key].shared, stateAfterRequest.contexts[key].shared);
+      const targetSocket = clientGuidToSocket[key];
+      if (stateChanged) {
+        log.info(`After ${ action.type } state for ${ key } changed, sending action`);
+        targetSocket.emit('action', action);
+      } else {
+        log.info(`After ${ action.type } state for ${ key } is same`);
+      }
+    });
+    return result;
+  };
+}
+
 const dataDirPath = path.join(__dirname, 'data');
 const stateFilePath = path.join(__dirname, 'data/state.json');
+
+const clientSocketIdToGuid = {};
+const clientGuidToSocket = {};
 
 if (!fs.existsSync(dataDirPath)) {
   fs.mkdirSync(dataDirPath);
@@ -164,7 +224,7 @@ try {
 }
 
 if (stateStr.trim().length === 0) stateStr = '{}';
-const store = Redux.createStore(globalReducer, JSON.parse(stateStr));
+const store = redux.createStore(globalReducer, JSON.parse(stateStr), redux.applyMiddleware(serverMiddleware, serverMiddleware$1.bind(undefined, clientGuidToSocket)));
 
 store.subscribe(function persistState() {
   const currentState = store.getState();
@@ -174,9 +234,6 @@ store.subscribe(function persistState() {
     }
   });
 });
-
-const clientSocketIdToGuid = {};
-const clientGuidToSocket = {};
 
 function onSocket(io, socket) {
   const ipAddress = socket.request.connection.remoteAddress;
@@ -189,7 +246,7 @@ function onSocket(io, socket) {
     log.info(`client ??@${ clientId } authenticated as ${ authToken }`);
     store.dispatch({
       type: 'CONTEXT_SPAWNED',
-      id: clientSocketIdToGuid[socket.id]
+      guid: authToken
     });
     socket.emit('initial_state', store.getState().contexts[authToken].shared);
   });
@@ -198,7 +255,7 @@ function onSocket(io, socket) {
     log.info(`client ${ clientSocketIdToGuid[socket.id] }@${ clientId } disconnected`);
     store.dispatch({
       type: 'CONTEXT_DESPAWNED',
-      id: clientSocketIdToGuid[socket.id]
+      guid: clientSocketIdToGuid[socket.id]
     });
     clientGuidToSocket[clientSocketIdToGuid[socket.id]] = undefined;
     clientSocketIdToGuid[socket.id] = undefined;
@@ -207,27 +264,10 @@ function onSocket(io, socket) {
   socket.on('command_request', function (action) {
     if (action.type !== 'COMMAND_REQUEST') return;
     log.info(`client ${ clientSocketIdToGuid[socket.id] }@${ clientId } command:${ JSON.stringify(action.command) }`);
-
-    chatActionHandler(store.getState(), {
+    store.dispatch({
       type: action.type,
-      command: action.command,
-      origin: clientSocketIdToGuid[socket.id]
-    }, action => {
-      log.info(`dispatching ${ JSON.stringify(action) }`);
-      const stateBeforeRequest = store.getState();
-      store.dispatch(action);
-      const stateAfterRequest = store.getState();
-      Object.keys(stateBeforeRequest.contexts).forEach(key => {
-
-        const stateChanged = !shallowEqual(stateBeforeRequest.contexts[key].shared, stateAfterRequest.contexts[key].shared);
-        const targetSocket = clientGuidToSocket[key];
-        if (stateChanged) {
-          log.info(`After ${ action.type } state for ${ key } changed, sending action`);
-          targetSocket.emit('action', action);
-        } else {
-          log.info(`After ${ action.type } state for ${ key } is same`);
-        }
-      });
+      guid: clientSocketIdToGuid[socket.id],
+      command: action.command
     });
   });
 }
@@ -258,3 +298,4 @@ server.listen(port, host, function (err) {
     log.info(`Listening at http://${ host }:${ port }`);
   }
 });
+//# sourceMappingURL=server.bundle.js.map

@@ -1,8 +1,6 @@
 (function (React$1,reactRedux,redux,ReactDOM) {
 'use strict';
 
-var redux__default = 'default' in redux ? redux['default'] : redux;
-
 var css = {
     "mainContainer": "mcf9760dce_mainContainer",
     "chat": "mcf9760dce_chat",
@@ -137,6 +135,7 @@ function changed(oldState, newState) {
 }
 
 const initialState = {
+  actionState: [],
   messages: [{
     id: guid(),
     from: 'Chat System',
@@ -147,6 +146,14 @@ const initialState = {
 
 function contextReducer(state = initialState, action) {
   switch (action.type) {
+    case 'CLIENT_STATE_ENTER_PUSH':
+      return Object.assign({}, state, {
+        actionState: state.actionState.concat(action.name)
+      });
+    case 'CLIENT_STATE_ENTER_REPLACE':
+      return Object.assign({}, state, {
+        actionState: state.actionState.slice(0, state.actionState.length - 1).concat(action.name)
+      });
     case 'SAY':
       return Object.assign({}, state, {
         messages: state.messages.concat({
@@ -190,9 +197,9 @@ function clientContextReducer(state = initialState$1, action) {
 function allContextsReducer(state = {}, action) {
   switch (action.type) {
     case 'CONTEXT_SPAWNED':
-      return Object.assign({}, state, { [action.id]: clientContextReducer(state[action.id], action) });
+      return Object.assign({}, state, { [action.guid]: clientContextReducer(state[action.guid], action) });
     case 'CONTEXT_DESPAWNED':
-      return Object.assign({}, state, { [action.id]: clientContextReducer(state[action.id], action) });
+      return Object.assign({}, state, { [action.guid]: clientContextReducer(state[action.guid], action) });
     default:
       return changed(state, Object.keys(state).reduce((newState, context) => {
         newState[context] = clientContextReducer(state[context], action);
@@ -201,7 +208,7 @@ function allContextsReducer(state = {}, action) {
   }
 }
 
-redux__default.combineReducers({
+redux.combineReducers({
   contexts: allContextsReducer
 });
 
