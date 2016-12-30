@@ -162,6 +162,10 @@ function contextReducer(state = initialState, action) {
       return Object.assign({}, state, {
         actionState: state.actionState.concat(action.name)
       });
+    case 'CLIENT_STATE_POP':
+      return Object.assign({}, state, {
+        actionState: state.actionState.slice(0, state.actionState.length - 1)
+      });
     case 'CLIENT_STATE_ENTER_REPLACE':
       return Object.assign({}, state, {
         actionState: state.actionState.slice(0, state.actionState.length - 1).concat(action.name)

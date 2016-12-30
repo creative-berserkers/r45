@@ -38,6 +38,12 @@ function guid() {
   return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 }
 
+function randomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
 function shallowEqual(oldState, newState) {
   const resultOldToNew = Object.keys(oldState).reduce((result, oldKey) => {
     return result === true ? result : oldState[oldKey] !== newState[oldKey];
@@ -74,6 +80,21 @@ function setState(guid$$1, name) {
   };
 }
 
+function pushState(guid$$1, name) {
+  return {
+    type: 'CLIENT_STATE_ENTER_PUSH',
+    guid: guid$$1,
+    name: name
+  };
+}
+
+function popState(guid$$1) {
+  return {
+    type: 'CLIENT_STATE_POP',
+    guid: guid$$1
+  };
+}
+
 function setName(guid$$1, name) {
   return {
     type: 'CLIENT_SET_NAME',
@@ -107,6 +128,10 @@ function contextReducer(state = initialState$1, action) {
     case 'CLIENT_STATE_ENTER_PUSH':
       return Object.assign({}, state, {
         actionState: state.actionState.concat(action.name)
+      });
+    case 'CLIENT_STATE_POP':
+      return Object.assign({}, state, {
+        actionState: state.actionState.slice(0, state.actionState.length - 1)
       });
     case 'CLIENT_STATE_ENTER_REPLACE':
       return Object.assign({}, state, {
@@ -239,9 +264,26 @@ var townLobby = {
   onEnter: (guid, state, dispatch) => {
     dispatch(message(GM, guid, 'You are entering the town area. You see your friends here.'));
   },
+  onReturn: (guid, state, dispatch, fromState) => {
+    log.info(`${ guid } Return from state: `, fromState);
+  },
   onCommand: (guid, state, dispatch, command) => {
-    dispatch(message(`${ name(state, guid) }[${ className(state, guid) }]`, 'all', command));
+    if (command === '/roll') {
+      dispatch(pushState(guid, 'rollDices'));
+    } else {
+      dispatch(message(`${ name(state, guid) }[${ className(state, guid) }]`, 'all', command));
+    }
   }
+};
+
+var rollDices = {
+  onEnter: (guid$$1, state, dispatch) => {
+    const player = `${ name(state, guid$$1) }[${ className(state, guid$$1) }]`;
+    dispatch(message('GM', 'all', `${ player } is rolling dices, result:`));
+    dispatch(message('GM', 'all', `${ [randomInt(1, 6), randomInt(1, 6), randomInt(1, 6), randomInt(1, 6)] }`));
+    dispatch(popState(guid$$1));
+  },
+  onCommand: (guid$$1, state, dispatch, command) => {}
 };
 
 
@@ -249,7 +291,8 @@ var townLobby = {
 var actionStateHandlers = Object.freeze({
 	introduction: introduction,
 	classSelection: classSelection,
-	townLobby: townLobby
+	townLobby: townLobby,
+	rollDices: rollDices
 });
 
 function serverMiddleware({ getState, dispatch }) {
@@ -271,6 +314,17 @@ function serverMiddleware({ getState, dispatch }) {
         const name = currActionState[currActionState.length - 1];
         log.info(`${ action.guid } entering state ${ name }`);
         actionStateHandlers[name].onEnter(action.guid, getState(), dispatch);
+      }
+      return result;
+    } else if (action.type === 'CLIENT_STATE_POP') {
+      const prevActionState = getState().contexts[action.guid].shared.actionState;
+      const fromStateName = prevActionState[prevActionState.length - 1];
+      const result = next(action);
+      const currActionState = getState().contexts[action.guid].shared.actionState;
+      const name = currActionState[currActionState.length - 1];
+
+      if (actionStateHandlers[name].onReturn) {
+        actionStateHandlers[name].onReturn(action.guid, getState(), dispatch, fromStateName);
       }
       return result;
     } else if (action.type === 'COMMAND_REQUEST') {

@@ -19,6 +19,21 @@ export function setState(guid, name){
   }
 }
 
+export function pushState(guid, name){
+  return {
+    type: 'CLIENT_STATE_ENTER_PUSH',
+    guid: guid,
+    name: name
+  }
+}
+
+export function popState(guid) {
+  return {
+    type: 'CLIENT_STATE_POP',
+    guid: guid
+  }
+}
+
 export function setName(guid, name){
   return {
     type : 'CLIENT_SET_NAME',
@@ -52,6 +67,10 @@ export default function contextReducer(state = initialState, action){
     case 'CLIENT_STATE_ENTER_PUSH': return {
       ...state,
       actionState: state.actionState.concat(action.name)
+    }
+    case 'CLIENT_STATE_POP' : return {
+      ...state,
+      actionState: state.actionState.slice(0,state.actionState.length-1)
     }
     case 'CLIENT_STATE_ENTER_REPLACE' : return {
       ...state,
