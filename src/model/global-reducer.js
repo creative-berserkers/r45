@@ -29,7 +29,13 @@ function allContextsReducer(state = {}, action){
     case 'CONTEXT_SPAWNED': return {...state, [action.guid]: clientContextReducer(state[action.guid], action)}
     case 'CONTEXT_DESPAWNED': return {...state, [action.guid]: clientContextReducer(state[action.guid], action)}
     default : return changed(state, Object.keys(state).reduce((newState, context) => {
-      newState[context] = clientContextReducer(state[context], action)
+      if(action.guid && action.guid === context){
+        newState[context] = clientContextReducer(state[context], action)
+      }
+      if(!action.guid) {
+        newState[context] = clientContextReducer(state[context], action)
+      }
+
       return newState
     }, {}))
   }

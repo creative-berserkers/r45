@@ -10,7 +10,7 @@
     "watch:server": "node_modules/.bin/nodemon --watch src/server --watch src/model --watch src/action-handlers -e js --exec \"yarn run build:server && node server.bundle.js \"",
     "build" : "yarn run build:all",
     "start": "node server.bundle.js",
-    "debug": "node --inspect server.bundle.js",
+    "debug": "node --inspect --debug-brk server.bundle.js",
     "lint": "eslint src",
     "test": "find ./src -name '*.spec.js' | xargs mocha  --compilers js:babel-core/register --require babelhook --reporter spec"
   },

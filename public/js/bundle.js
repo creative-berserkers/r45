@@ -13,7 +13,9 @@ var css$1 = {
     "messageLogContainer": "mc7dc0d4f3_messageLogContainer",
     "messageLogContainerList": "mc7dc0d4f3_messageLogContainerList",
     "messageLogContainerInput": "mc7dc0d4f3_messageLogContainerInput",
-    "messageLogContainerSend": "mc7dc0d4f3_messageLogContainerSend"
+    "messageLogContainerSend": "mc7dc0d4f3_messageLogContainerSend",
+    "messageAuthorName": "mc7dc0d4f3_messageAuthorName",
+    "messageScrollContainer": "mc7dc0d4f3_messageScrollContainer"
 };
 
 let MessageLogContainer$1 = class MessageLogContainer extends React$1.Component {
@@ -36,6 +38,10 @@ let MessageLogContainer$1 = class MessageLogContainer extends React$1.Component 
     };
   }
 
+  componentDidUpdate() {
+    this.refs.messages.scrollTop = this.refs.messages.scrollHeight;
+  }
+
   render() {
 
     const messages = this.props.messages;
@@ -56,12 +62,16 @@ let MessageLogContainer$1 = class MessageLogContainer extends React$1.Component 
       { className: `${ this.props.className } ${ css$1.messageLogContainer }` },
       React$1.createElement(
         'div',
-        { key: 'list', className: css$1.messageLogContainerList },
+        { key: 'list', ref: 'messages', className: css$1.messageLogContainerList },
         messages.map(message => {
           return React$1.createElement(
             'div',
             { key: message.id },
-            message.from,
+            React$1.createElement(
+              'span',
+              { className: css$1.messageAuthorName },
+              message.from
+            ),
             ':',
             message.message
           );
@@ -135,6 +145,8 @@ function changed(oldState, newState) {
 }
 
 const initialState = {
+  name: 'Noname',
+  className: 'Noone',
   actionState: [],
   messages: [{
     id: guid(),
@@ -154,7 +166,7 @@ function contextReducer(state = initialState, action) {
       return Object.assign({}, state, {
         actionState: state.actionState.slice(0, state.actionState.length - 1).concat(action.name)
       });
-    case 'SAY':
+    case 'MESSAGE':
       return Object.assign({}, state, {
         messages: state.messages.concat({
           id: action.id,
@@ -162,6 +174,14 @@ function contextReducer(state = initialState, action) {
           to: action.to,
           message: action.message
         })
+      });
+    case 'CLIENT_SET_NAME':
+      return Object.assign({}, state, {
+        name: action.name
+      });
+    case 'CLIENT_SET_CLASS':
+      return Object.assign({}, state, {
+        className: action.name
       });
     case 'LOAD_CLIENT_STATE':
       return action.state;
@@ -202,7 +222,13 @@ function allContextsReducer(state = {}, action) {
       return Object.assign({}, state, { [action.guid]: clientContextReducer(state[action.guid], action) });
     default:
       return changed(state, Object.keys(state).reduce((newState, context) => {
-        newState[context] = clientContextReducer(state[context], action);
+        if (action.guid && action.guid === context) {
+          newState[context] = clientContextReducer(state[context], action);
+        }
+        if (!action.guid) {
+          newState[context] = clientContextReducer(state[context], action);
+        }
+
         return newState;
       }, {}));
   }

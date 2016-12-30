@@ -1,8 +1,10 @@
 import * as actionStateHandlers from './../states'
+import log from '../log'
 
 export default function serverMiddleware({ getState, dispatch }) {
   return (next) => (action) => {
     if(action.type === 'CONTEXT_SPAWNED'){
+      const result = next(action)
       if(getState().contexts[action.guid].shared.actionState.length === 0){
         dispatch({
           type: 'CLIENT_STATE_ENTER_PUSH',
@@ -10,16 +12,13 @@ export default function serverMiddleware({ getState, dispatch }) {
           name: 'introduction'
         })
       }
+      return result
     } else if(action.type === 'CLIENT_STATE_ENTER_PUSH' || action.type === 'CLIENT_STATE_ENTER_REPLACE') {
-      const prevActionState = getState().contexts[action.guid].shared.actionState
-      if (prevActionState.length > 0) {
-        const name = prevActionState[prevActionState.length - 1]
-        actionStateHandlers[name].onLeave(action.guid, getState(), dispatch)
-      }
       const result = next(action)
       const currActionState = getState().contexts[action.guid].shared.actionState
       if (currActionState.length > 0) {
         const name = currActionState[currActionState.length - 1]
+        log.info(`${action.guid} entering state ${name}`)
         actionStateHandlers[name].onEnter(action.guid, getState(), dispatch)
       }
       return result
