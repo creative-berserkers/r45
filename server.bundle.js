@@ -168,10 +168,13 @@ function allContextsReducer(state = {}, action) {
       return Object.assign({}, state, { [action.guid]: clientContextReducer(state[action.guid], action) });
     default:
       return changed(state, Object.keys(state).reduce((newState, context) => {
-        if (action.guid && action.guid === context) {
-          newState[context] = clientContextReducer(state[context], action);
-        }
-        if (!action.guid) {
+        if (action.guid) {
+          if (action.guid === context) {
+            newState[context] = clientContextReducer(state[context], action);
+          } else {
+            newState[context] = state[context];
+          }
+        } else {
           newState[context] = clientContextReducer(state[context], action);
         }
 
@@ -199,7 +202,7 @@ var introduction = {
   }
 };
 
-const classes = ['mage', 'warior', 'priest', 'hunter'];
+const classes = ['mage', 'warrior', 'priest', 'hunter', 'stone'];
 const gateKeeper = 'Gate Keeper';
 
 var classSelection = {
@@ -324,11 +327,15 @@ const store = redux.createStore(globalReducer, JSON.parse(stateStr), redux.apply
 
 store.subscribe(function persistState() {
   const currentState = store.getState();
-  fs.writeFile(stateFilePath, JSON.stringify(currentState, null, 2), function (err) {
-    if (err) {
-      return log.error(err);
-    }
-  });
+  if (currentState === undefined) {
+    log.warn('Saving empty state.');
+  } else {
+    fs.writeFile(stateFilePath, JSON.stringify(currentState, null, 2), function (err) {
+      if (err) {
+        return log.error(err);
+      }
+    });
+  }
 });
 
 function onSocket(io, socket) {

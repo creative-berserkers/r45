@@ -1,6 +1,6 @@
 import {message, setClass, setState} from '../../model/context-reducer'
 
-const classes = ['mage', 'warior', 'priest', 'hunter']
+const classes = ['mage', 'warrior', 'priest', 'hunter', 'stone']
 const gateKeeper = 'Gate Keeper'
 
 export default {

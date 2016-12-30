@@ -222,10 +222,13 @@ function allContextsReducer(state = {}, action) {
       return Object.assign({}, state, { [action.guid]: clientContextReducer(state[action.guid], action) });
     default:
       return changed(state, Object.keys(state).reduce((newState, context) => {
-        if (action.guid && action.guid === context) {
-          newState[context] = clientContextReducer(state[context], action);
-        }
-        if (!action.guid) {
+        if (action.guid) {
+          if (action.guid === context) {
+            newState[context] = clientContextReducer(state[context], action);
+          } else {
+            newState[context] = state[context];
+          }
+        } else {
           newState[context] = clientContextReducer(state[context], action);
         }
 

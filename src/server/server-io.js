@@ -27,11 +27,15 @@ const store = createStore(globalReducer, JSON.parse(stateStr), applyMiddleware(s
 
 store.subscribe(function persistState(){
   const currentState = store.getState()
-  fs.writeFile(stateFilePath, JSON.stringify(currentState, null, 2), function(err) {
-    if(err) {
-      return log.error(err)
-    }
-  })
+  if(currentState === undefined){
+    log.warn('Saving empty state.')
+  } else {
+    fs.writeFile(stateFilePath, JSON.stringify(currentState, null, 2), function(err) {
+      if(err) {
+        return log.error(err)
+      }
+    })
+  }
 })
 
 export default function onSocket(io, socket){
