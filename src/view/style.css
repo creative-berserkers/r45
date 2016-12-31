@@ -6,6 +6,12 @@
   grid-template-areas:  "chat";
 }
 
+.rollState {
+  grid-template-rows: 1fr 100px;
+  grid-template-areas:  "chat"
+                        "dicepool";
+}
+
 .chat {
   grid-area: chat;
 }

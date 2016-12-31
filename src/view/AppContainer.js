@@ -1,17 +1,41 @@
 import css from './style.css'
 import * as React from 'react'
+import {connect} from 'react-redux'
+import {currentActionState} from '../model/selectors/client'
 
 import MessageLogContainer from './messagelog'
+import DicePoolContainer from './dicepool'
 
-export default class AppContainer extends React.Component {
+class AppContainer extends React.Component {
   constructor() {
     super()
   }
 
   render(){
-    return <div className={css.mainContainer}>
-        <MessageLogContainer className={css.chat}>
-        </MessageLogContainer>
-    </div>
+    const actionState = this.props.actionState
+    const name = actionState ? actionState.name : 'none'
+    if(name === 'rollDices'){
+      return <div className={`${css.mainContainer} ${css.rollState}`}>
+        <MessageLogContainer className={css.chat}></MessageLogContainer>
+        <DicePoolContainer className={css.dicepool}></DicePoolContainer>
+      </div>
+    } else {
+      return <div className={css.mainContainer}>
+        <MessageLogContainer className={css.chat}></MessageLogContainer>
+      </div>
+    }
   }
 }
+
+const mapDispatchToProps = function(dispatch) {
+  return {
+  }
+}
+
+const mapStateToProps = function(state) {
+  return {
+    actionState: currentActionState(state)
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(AppContainer)

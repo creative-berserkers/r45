@@ -7,3 +7,7 @@ export function numberOfRerolls(state){
 export function rolledDices(state) {
   return currentActionState(state).rolledDices || []
 }
+
+export function locks(state){
+  return currentActionState(state).locks || []
+}

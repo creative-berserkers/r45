@@ -61,19 +61,8 @@ function changed(oldState, newState) {
   return shallowEqual(oldState, newState) ? oldState : newState;
 }
 
-function uniqueArray(array) {
-  const n = {},
-        r = [];
-  for (let i = 0; i < array.length; i++) {
-    if (!n[array[i]]) {
-      n[array[i]] = true;
-      r.push(array[i]);
-    }
-  }
-  return r;
-}
-
 const ROLL = 'ROLL_DICES:ROLL';
+const LOCK = 'ROLL_DICES:LOCK';
 
 function roll(guid, rolledDices) {
   return {
@@ -83,9 +72,18 @@ function roll(guid, rolledDices) {
   };
 }
 
+function lock(guid, locks) {
+  return {
+    type: LOCK,
+    guid: guid,
+    locks: locks
+  };
+}
+
 const initialState$2 = {
   name: 'rollDices',
   rolledDices: [],
+  locks: [],
   numberOfRolls: 0
 };
 
@@ -95,6 +93,10 @@ function rollDices(state = initialState$2, action) {
       return Object.assign({}, state, {
         rolledDices: action.rolledDices,
         numberOfRolls: state.numberOfRolls + 1
+      });
+    case LOCK:
+      return Object.assign({}, state, {
+        locks: action.locks
       });
     default:
       return state;
@@ -312,12 +314,12 @@ var globalReducer = redux.combineReducers({
 });
 
 var introduction$1 = {
-  onEnter: (guid, state, dispatch) => {
+  onEnter: (guid, getState, dispatch) => {
     dispatch(message('GM', guid, 'You are entering town gate, the sign says "Welcome to Northwinter". Gate keeper is looking at you very suspiciously.'));
     dispatch(message('Gate Keeper', guid, 'Who the fuck are you?'));
     dispatch(message('GM', guid, 'You are quite sure that not giving this man proper answer will get you into trouble. Please type your name.'));
   },
-  onCommand: (guid, state, dispatch, command) => {
+  onCommand: (guid, getState, dispatch, command) => {
     const name = command;
     dispatch(message('Gate Keeper', guid, `So... Your name is ${ command }. I have never heard about you.`));
     dispatch(message('GM', guid, 'Gate Keeper now looks at you even more suspiciously.'));
@@ -330,7 +332,7 @@ const classes = ['mage', 'warrior', 'priest', 'hunter', 'stone'];
 const gateKeeper = 'Gate Keeper';
 
 var classSelection$1 = {
-  onEnter: (guid, state, dispatch) => {
+  onEnter: (guid, getState, dispatch) => {
     dispatch(message(gateKeeper, guid, 'Listen buddy, we have rules here, and the rules are: ' + 'Every fucker entering that town behind me must be on the list I have here. If not...'));
     dispatch(message('GM', guid, 'Gate keeper looks at amulet you have on your neck.'));
 
@@ -338,7 +340,7 @@ var classSelection$1 = {
     dispatch(message(gateKeeper, guid, 'I just need to know your class'));
     dispatch(message('GM', guid, `Available classes are: ${ classes.join(', ') } type in the name of the class you want`));
   },
-  onCommand: (guid, state, dispatch, command) => {
+  onCommand: (guid, getState, dispatch, command) => {
     if (classes.includes(command)) {
       dispatch(message(gateKeeper, guid, 'Yes... yes... we allow those guys in, come in...'));
       dispatch(setClass(guid, command));
@@ -380,13 +382,14 @@ function currentActionStateName(state) {
 const GM = 'GM';
 
 var townLobby$1 = {
-  onEnter: (guid, state, dispatch) => {
+  onEnter: (guid, getState, dispatch) => {
     dispatch(message(GM, guid, 'You are entering the town area. You see your friends here.'));
   },
-  onReturn: (guid, state, dispatch, fromState) => {
+  onReturn: (guid, getState, dispatch, fromState) => {
     log.info(`${ guid } Return from state: `, fromState);
   },
-  onCommand: (guid, state, dispatch, command) => {
+  onCommand: (guid, getState, dispatch, command) => {
+    const state = getState();
     if (command === '/roll') {
       dispatch(pushState(guid, 'rollDices'));
     } else {
@@ -403,40 +406,58 @@ function rolledDices(state) {
   return currentActionState(state).rolledDices || [];
 }
 
-function onFinishRolling(state, guid$$1, dispatch) {
+function locks(state) {
+  return currentActionState(state).locks || [];
+}
+
+function onFinishRolling(getState, guid$$1, dispatch) {
+  const state = getState();
   const player = `${ name(client(state, guid$$1)) }[${ className(client(state, guid$$1)) }]`;
   dispatch(message('GM', 'all', `${ player } is rolling: ${ rolledDices(client(state, guid$$1)) }`));
   dispatch(popState(guid$$1));
 }
 
 var rollDices$1 = {
-  onEnter: (guid$$1, state, dispatch) => {
+  onEnter: (guid$$1, getState, dispatch) => {
     const firstRoll = [randomInt(1, 7), randomInt(1, 7), randomInt(1, 7), randomInt(1, 7)];
+    const locks$$1 = [false, false, false, false];
     dispatch(roll(guid$$1, firstRoll));
-    dispatch(message('GM', guid$$1, `Your initial roll is: ${ firstRoll }.` + 'If you want to reroll, type /reroll <number> ... <number>. Where <number> is index of dice you want to reroll or /keep'));
+    dispatch(lock(guid$$1, locks$$1));
+    /*dispatch(message('GM', guid, `Your initial roll is: ${firstRoll}.` +
+      'If you want to reroll, type /reroll <number> ... <number>. Where <number> is index of dice you want to reroll or /keep'))
+    */
   },
-  onCommand: (guid$$1, state, dispatch, command) => {
+  onCommand: (guid$$1, getState, dispatch, command) => {
+    const state = getState();
     if (command.startsWith('/reroll')) {
-      const dices = uniqueArray(command.replace('/reroll', '').split(' ').map(el => +el));
       const currentDices = rolledDices(client(state, guid$$1));
-      log.info('currentDices ', currentDices);
+      const currentLocks = locks(client(state, guid$$1));
       const newDices = currentDices.map((el, index) => {
-        if (dices.includes(index + 1)) {
+        if (!currentLocks[index]) {
           return randomInt(1, 7);
         } else {
           return el;
         }
       });
-      dispatch(message('GM', guid$$1, `After ${ numberOfRerolls(client(state, guid$$1)) } rerolls, you have: ${ newDices }`));
+      //dispatch(message('GM', guid, `After ${numberOfRerolls(client(state, guid))} rerolls, you have: ${newDices}`))
 
       dispatch(roll(guid$$1, newDices));
     } else if (command.startsWith('/keep')) {
       onFinishRolling(state, guid$$1, dispatch);
+    } else if (command.startsWith('/lock')) {
+      const splited = command.split(' ');
+      if (splited.length === 2) {
+        const index = +splited[1];
+        const currentLocks = locks(client(state, guid$$1));
+        let newLocks = currentLocks.slice(0, currentLocks.length);
+        newLocks[index] = !newLocks[index];
+        dispatch(lock(guid$$1, newLocks));
+      }
     } else {
       dispatch(message('GM', guid$$1, 'Unrecognized command, please use /reroll <number> ... <number> or /keep'));
     }
     if (numberOfRerolls(client(state, guid$$1)) >= 2) {
-      onFinishRolling(state, guid$$1, dispatch);
+      onFinishRolling(getState, guid$$1, dispatch);
     }
   }
 };
@@ -468,7 +489,7 @@ function serverMiddleware({ getState, dispatch }) {
         const name$$1 = currentActionStateName(client(getState(), action.guid));
         log.info(`${ action.guid } entering state ${ name$$1 }`);
         if (actionStateHandlers[name$$1].onEnter) {
-          actionStateHandlers[name$$1].onEnter(action.guid, getState(), dispatch);
+          actionStateHandlers[name$$1].onEnter(action.guid, getState, dispatch);
         }
       }
       return result;
@@ -480,14 +501,14 @@ function serverMiddleware({ getState, dispatch }) {
         const name$$1 = currentActionStateName(client(getState(), action.guid));
         log.info(`${ action.guid } returning from ${ fromStateName } state  to ${ name$$1 } state`);
         if (actionStateHandlers[name$$1].onReturn) {
-          actionStateHandlers[name$$1].onReturn(action.guid, getState(), dispatch, fromStateName, fromStateInternalState);
+          actionStateHandlers[name$$1].onReturn(action.guid, getState, dispatch, fromStateName, fromStateInternalState);
         }
       }
       return result;
     } else if (action.type === 'COMMAND_REQUEST') {
       if (actionStateCount(client(getState(), action.guid)) > 0) {
         const name$$1 = currentActionStateName(client(getState(), action.guid));
-        actionStateHandlers[name$$1].onCommand(action.guid, getState(), dispatch, action.command);
+        actionStateHandlers[name$$1].onCommand(action.guid, getState, dispatch, action.command);
       }
     } else {
       return next(action);

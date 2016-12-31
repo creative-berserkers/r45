@@ -1,5 +1,4 @@
-import actionInternalStateReducer from 'action-internal-state-reducer'
-import {changed, shallowEqual} from '../utils'
+import {shallowEqual} from '../utils'
 import * as clientActionReducers from './client-action-state'
 
 export default function actionStateReducer(state = [], action) {

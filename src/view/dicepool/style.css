@@ -1,5 +1,5 @@
 .dicePoolComponent {
-  background-color: orange;
+  background-color: black;
   display: flex;
   align-items: center;
 }
@@ -12,5 +12,9 @@
 }
 
 .diceLocked {
-  border: 2px solid black;
+  border: 2px solid red;
+}
+
+.rerollButton {
+  height:100px;
 }

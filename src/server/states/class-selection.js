@@ -4,7 +4,7 @@ const classes = ['mage', 'warrior', 'priest', 'hunter', 'stone']
 const gateKeeper = 'Gate Keeper'
 
 export default {
-  onEnter: (guid, state, dispatch)=>{
+  onEnter: (guid, getState, dispatch)=>{
     dispatch(message(gateKeeper, guid, 'Listen buddy, we have rules here, and the rules are: '+
       'Every fucker entering that town behind me must be on the list I have here. If not...'))
     dispatch(message('GM', guid, 'Gate keeper looks at amulet you have on your neck.'))
@@ -13,7 +13,7 @@ export default {
     dispatch(message(gateKeeper, guid,'I just need to know your class'))
     dispatch(message('GM', guid, `Available classes are: ${classes.join(', ')} type in the name of the class you want`))
   },
-  onCommand:(guid, state, dispatch, command)=>{
+  onCommand:(guid, getState, dispatch, command)=>{
     if(classes.includes(command)){
       dispatch(message(gateKeeper, guid, 'Yes... yes... we allow those guys in, come in...'))
       dispatch(setClass(guid, command))

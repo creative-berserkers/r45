@@ -3,11 +3,16 @@
 
 var css = {
     "mainContainer": "mcf9760dce_mainContainer",
+    "rollState": "mcf9760dce_rollState",
     "chat": "mcf9760dce_chat",
     "map": "mcf9760dce_map",
     "dicepool": "mcf9760dce_dicepool",
     "action": "mcf9760dce_action"
 };
+
+function currentActionState(state) {
+  return state.actionState[state.actionState.length - 1];
+}
 
 var css$1 = {
     "messageLogContainer": "mc7dc0d4f3_messageLogContainer",
@@ -88,7 +93,7 @@ let MessageLogContainer$1 = class MessageLogContainer extends React$1.Component 
 };
 
 
-const mapDispatchToProps = function (dispatch) {
+const mapDispatchToProps$1 = function (dispatch) {
   return {
     onSend: function (command) {
       dispatch({ type: 'COMMAND_REQUEST', command: command });
@@ -96,13 +101,83 @@ const mapDispatchToProps = function (dispatch) {
   };
 };
 
-const mapStateToProps = function (state) {
+const mapStateToProps$1 = function (state) {
   return {
     messages: state.messages
   };
 };
 
-var MessageLogContainer$2 = reactRedux.connect(mapStateToProps, mapDispatchToProps)(MessageLogContainer$1);
+var MessageLogContainer$2 = reactRedux.connect(mapStateToProps$1, mapDispatchToProps$1)(MessageLogContainer$1);
+
+var css$2 = {
+    "dicePoolComponent": "mc035ae162_dicePoolComponent",
+    "dice": "mc035ae162_dice",
+    "diceLocked": "mc035ae162_diceLocked",
+    "rerollButton": "mc035ae162_rerollButton"
+};
+
+const faces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+const colors = ['white', 'yellow', 'green', 'orange', 'blue', 'violet'];
+
+let DiceComponent = class DiceComponent extends React$1.Component {
+
+  render() {
+    const {
+      className,
+      face,
+      lock,
+      onClick } = this.props;
+
+    return React$1.createElement(
+      'div',
+      { className: `${ className } ${ css$2.dice } ${ lock ? css$2.diceLocked : '' }`,
+        style: { backgroundColor: colors[face - 1] },
+        onClick: onClick },
+      React$1.createElement(
+        'span',
+        null,
+        faces[face - 1]
+      )
+    );
+  }
+};
+
+let DicePoolComponent = class DicePoolComponent extends React$1.Component {
+
+  render() {
+    const { className: className$$1, dices, onReroll, onLock, locks } = this.props;
+
+    return React$1.createElement(
+      'div',
+      { className: `${ className$$1 } ${ css$2.dicePoolComponent }` },
+      React$1.createElement(
+        'button',
+        { className: css$2.rerollButton, onClick: event => {
+            onReroll();
+          } },
+        'Reroll dices'
+      ),
+      dices.map((number, index) => React$1.createElement(DiceComponent, { key: index, face: number, lock: locks[index], onClick: onLock.bind(undefined, index) }))
+    );
+  }
+};
+
+
+const mapStateToProps$2 = state => ({
+  dices: currentActionState(state).rolledDices,
+  locks: currentActionState(state).locks
+});
+
+const mapDispatchToProps$2 = dispatch => ({
+  onReroll: () => {
+    dispatch({ type: 'COMMAND_REQUEST', command: '/reroll' });
+  },
+  onLock: index => {
+    dispatch({ type: 'COMMAND_REQUEST', command: `/lock ${ index }` });
+  }
+});
+
+var DicePoolContainer$1 = reactRedux.connect(mapStateToProps$2, mapDispatchToProps$2)(DicePoolComponent);
 
 let AppContainer = class AppContainer extends React$1.Component {
   constructor() {
@@ -110,13 +185,37 @@ let AppContainer = class AppContainer extends React$1.Component {
   }
 
   render() {
-    return React$1.createElement(
-      'div',
-      { className: css.mainContainer },
-      React$1.createElement(MessageLogContainer$2, { className: css.chat })
-    );
+    const actionState$$1 = this.props.actionState;
+    const name$$1 = actionState$$1 ? actionState$$1.name : 'none';
+    if (name$$1 === 'rollDices') {
+      return React$1.createElement(
+        'div',
+        { className: `${ css.mainContainer } ${ css.rollState }` },
+        React$1.createElement(MessageLogContainer$2, { className: css.chat }),
+        React$1.createElement(DicePoolContainer$1, { className: css.dicepool })
+      );
+    } else {
+      return React$1.createElement(
+        'div',
+        { className: css.mainContainer },
+        React$1.createElement(MessageLogContainer$2, { className: css.chat })
+      );
+    }
   }
 };
+
+
+const mapDispatchToProps = function (dispatch) {
+  return {};
+};
+
+const mapStateToProps = function (state) {
+  return {
+    actionState: currentActionState(state)
+  };
+};
+
+var AppContainer$1 = reactRedux.connect(mapStateToProps, mapDispatchToProps)(AppContainer);
 
 function s4() {
   return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
@@ -145,12 +244,16 @@ function changed(oldState, newState) {
 }
 
 const ROLL = 'ROLL_DICES:ROLL';
+const LOCK = 'ROLL_DICES:LOCK';
+
+
 
 
 
 const initialState$1 = {
   name: 'rollDices',
   rolledDices: [],
+  locks: [],
   numberOfRolls: 0
 };
 
@@ -160,6 +263,10 @@ function rollDices(state = initialState$1, action) {
       return Object.assign({}, state, {
         rolledDices: action.rolledDices,
         numberOfRolls: state.numberOfRolls + 1
+      });
+    case LOCK:
+      return Object.assign({}, state, {
+        locks: action.locks
       });
     default:
       return state;
@@ -387,7 +494,7 @@ const store = redux.createStore(contextReducer, composeEnhancers(redux.applyMidd
 ReactDOM.render(React.createElement(
   reactRedux.Provider,
   { store: store },
-  React.createElement(AppContainer, null)
+  React.createElement(AppContainer$1, null)
 ), document.getElementById('mount'));
 
 }(React,ReactRedux,Redux,ReactDOM));

@@ -6,13 +6,14 @@ import log from '../log'
 const GM = 'GM'
 
 export default {
-  onEnter: (guid, state, dispatch)=>{
+  onEnter: (guid, getState, dispatch)=>{
     dispatch(message(GM, guid, 'You are entering the town area. You see your friends here.'))
   },
-  onReturn:(guid, state, dispatch, fromState)=>{
+  onReturn:(guid, getState, dispatch, fromState)=>{
     log.info(`${guid} Return from state: `, fromState)
   },
-  onCommand:(guid, state, dispatch, command)=>{
+  onCommand:(guid, getState, dispatch, command)=>{
+    const state = getState()
     if(command === '/roll'){
       dispatch(pushState(guid, 'rollDices'))
     } else{

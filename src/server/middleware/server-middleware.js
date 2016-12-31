@@ -21,7 +21,7 @@ export default function serverMiddleware({ getState, dispatch }) {
         const name = currentActionStateName(client(getState(), action.guid))
         log.info(`${action.guid} entering state ${name}`)
         if(actionStateHandlers[name].onEnter){
-          actionStateHandlers[name].onEnter(action.guid, getState(), dispatch)
+          actionStateHandlers[name].onEnter(action.guid, getState, dispatch)
         }
       }
       return result
@@ -33,14 +33,14 @@ export default function serverMiddleware({ getState, dispatch }) {
         const name = currentActionStateName(client(getState(), action.guid))
         log.info(`${action.guid} returning from ${fromStateName} state  to ${name} state`)
         if (actionStateHandlers[name].onReturn) {
-          actionStateHandlers[name].onReturn(action.guid, getState(), dispatch, fromStateName, fromStateInternalState)
+          actionStateHandlers[name].onReturn(action.guid, getState, dispatch, fromStateName, fromStateInternalState)
         }
       }
       return result
     } else if(action.type === 'COMMAND_REQUEST'){
       if (actionStateCount(client(getState(), action.guid)) > 0) {
         const name = currentActionStateName(client(getState(), action.guid))
-        actionStateHandlers[name].onCommand(action.guid, getState(), dispatch, action.command)
+        actionStateHandlers[name].onCommand(action.guid, getState, dispatch, action.command)
       }
     } else {
       return next(action)
