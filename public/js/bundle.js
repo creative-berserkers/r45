@@ -144,6 +144,97 @@ function changed(oldState, newState) {
   return shallowEqual(oldState, newState) ? oldState : newState;
 }
 
+const ROLL = 'ROLL_DICES:ROLL';
+
+
+
+const initialState$1 = {
+  name: 'rollDices',
+  rolledDices: [],
+  numberOfRolls: 0
+};
+
+function rollDices(state = initialState$1, action) {
+  switch (action.type) {
+    case ROLL:
+      return Object.assign({}, state, {
+        rolledDices: action.rolledDices,
+        numberOfRolls: state.numberOfRolls + 1
+      });
+    default:
+      return state;
+  }
+}
+
+const initialState$2 = {
+  name: 'introduction'
+};
+
+function introduction(state = initialState$2, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}
+
+const initialState$3 = {
+  name: 'classSelection'
+};
+
+function classSelection(state = initialState$3, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}
+
+const initialState$4 = {
+  name: 'townLobby'
+};
+
+function townLobby(state = initialState$4, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}
+
+
+
+var clientActionReducers = Object.freeze({
+	rollDices: rollDices,
+	introduction: introduction,
+	classSelection: classSelection,
+	townLobby: townLobby
+});
+
+function actionStateReducer(state = [], action) {
+  switch (action.type) {
+    case 'CLIENT_STATE_ENTER_PUSH':
+      return state.concat(clientActionReducers[action.name](undefined, { type: '@INIT@' }));
+    case 'CLIENT_STATE_POP':
+      return state.slice(0, state.length - 1);
+    case 'CLIENT_STATE_ENTER_REPLACE':
+      return state.slice(0, state.length - 1).concat(clientActionReducers[action.name](undefined, { type: '@INIT@' }));
+    default:
+      {
+        if (state.length === 0) return state;
+        const topState = state[state.length - 1];
+        const topStateName = topState.name;
+        const reducer = clientActionReducers[topStateName];
+        if (reducer) {
+          const newTopState = reducer(topState, action);
+          if (shallowEqual(topState, newTopState)) {
+            return state;
+          } else {
+            return state.slice(0, state.length - 1).concat(newTopState);
+          }
+        }
+        return state;
+      }
+  }
+}
+
 const initialState = {
   name: 'Noname',
   className: 'Noone',
@@ -158,18 +249,6 @@ const initialState = {
 
 function contextReducer(state = initialState, action) {
   switch (action.type) {
-    case 'CLIENT_STATE_ENTER_PUSH':
-      return Object.assign({}, state, {
-        actionState: state.actionState.concat(action.name)
-      });
-    case 'CLIENT_STATE_POP':
-      return Object.assign({}, state, {
-        actionState: state.actionState.slice(0, state.actionState.length - 1)
-      });
-    case 'CLIENT_STATE_ENTER_REPLACE':
-      return Object.assign({}, state, {
-        actionState: state.actionState.slice(0, state.actionState.length - 1).concat(action.name)
-      });
     case 'MESSAGE':
       return Object.assign({}, state, {
         messages: state.messages.concat({
@@ -190,16 +269,18 @@ function contextReducer(state = initialState, action) {
     case 'LOAD_CLIENT_STATE':
       return action.state;
     default:
-      return state;
+      return changed(state, Object.assign({}, state, {
+        actionState: actionStateReducer(state.actionState, action)
+      }));
   }
 }
 
-const initialState$1 = {
+const initialState$5 = {
   connected: false,
   shared: contextReducer(undefined, { type: '@INIT@' })
 };
 
-function clientContextReducer(state = initialState$1, action) {
+function clientContextReducer(state = initialState$5, action) {
   switch (action.type) {
     case 'CONTEXT_SPAWNED':
       return {

@@ -61,6 +61,115 @@ function changed(oldState, newState) {
   return shallowEqual(oldState, newState) ? oldState : newState;
 }
 
+function uniqueArray(array) {
+  const n = {},
+        r = [];
+  for (let i = 0; i < array.length; i++) {
+    if (!n[array[i]]) {
+      n[array[i]] = true;
+      r.push(array[i]);
+    }
+  }
+  return r;
+}
+
+const ROLL = 'ROLL_DICES:ROLL';
+
+function roll(guid, rolledDices) {
+  return {
+    type: ROLL,
+    guid: guid,
+    rolledDices: rolledDices
+  };
+}
+
+const initialState$2 = {
+  name: 'rollDices',
+  rolledDices: [],
+  numberOfRolls: 0
+};
+
+function rollDices(state = initialState$2, action) {
+  switch (action.type) {
+    case ROLL:
+      return Object.assign({}, state, {
+        rolledDices: action.rolledDices,
+        numberOfRolls: state.numberOfRolls + 1
+      });
+    default:
+      return state;
+  }
+}
+
+const initialState$3 = {
+  name: 'introduction'
+};
+
+function introduction(state = initialState$3, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}
+
+const initialState$4 = {
+  name: 'classSelection'
+};
+
+function classSelection(state = initialState$4, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}
+
+const initialState$5 = {
+  name: 'townLobby'
+};
+
+function townLobby(state = initialState$5, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}
+
+
+
+var clientActionReducers = Object.freeze({
+	rollDices: rollDices,
+	introduction: introduction,
+	classSelection: classSelection,
+	townLobby: townLobby
+});
+
+function actionStateReducer(state = [], action) {
+  switch (action.type) {
+    case 'CLIENT_STATE_ENTER_PUSH':
+      return state.concat(clientActionReducers[action.name](undefined, { type: '@INIT@' }));
+    case 'CLIENT_STATE_POP':
+      return state.slice(0, state.length - 1);
+    case 'CLIENT_STATE_ENTER_REPLACE':
+      return state.slice(0, state.length - 1).concat(clientActionReducers[action.name](undefined, { type: '@INIT@' }));
+    default:
+      {
+        if (state.length === 0) return state;
+        const topState = state[state.length - 1];
+        const topStateName = topState.name;
+        const reducer = clientActionReducers[topStateName];
+        if (reducer) {
+          const newTopState = reducer(topState, action);
+          if (shallowEqual(topState, newTopState)) {
+            return state;
+          } else {
+            return state.slice(0, state.length - 1).concat(newTopState);
+          }
+        }
+        return state;
+      }
+  }
+}
+
 function message(from, to, message) {
   return {
     type: 'MESSAGE',
@@ -125,18 +234,6 @@ const initialState$1 = {
 
 function contextReducer(state = initialState$1, action) {
   switch (action.type) {
-    case 'CLIENT_STATE_ENTER_PUSH':
-      return Object.assign({}, state, {
-        actionState: state.actionState.concat(action.name)
-      });
-    case 'CLIENT_STATE_POP':
-      return Object.assign({}, state, {
-        actionState: state.actionState.slice(0, state.actionState.length - 1)
-      });
-    case 'CLIENT_STATE_ENTER_REPLACE':
-      return Object.assign({}, state, {
-        actionState: state.actionState.slice(0, state.actionState.length - 1).concat(action.name)
-      });
     case 'MESSAGE':
       return Object.assign({}, state, {
         messages: state.messages.concat({
@@ -157,7 +254,9 @@ function contextReducer(state = initialState$1, action) {
     case 'LOAD_CLIENT_STATE':
       return action.state;
     default:
-      return state;
+      return changed(state, Object.assign({}, state, {
+        actionState: actionStateReducer(state.actionState, action)
+      }));
   }
 }
 
@@ -212,7 +311,7 @@ var globalReducer = redux.combineReducers({
   contexts: allContextsReducer
 });
 
-var introduction = {
+var introduction$1 = {
   onEnter: (guid, state, dispatch) => {
     dispatch(message('GM', guid, 'You are entering town gate, the sign says "Welcome to Northwinter". Gate keeper is looking at you very suspiciously.'));
     dispatch(message('Gate Keeper', guid, 'Who the fuck are you?'));
@@ -230,7 +329,7 @@ var introduction = {
 const classes = ['mage', 'warrior', 'priest', 'hunter', 'stone'];
 const gateKeeper = 'Gate Keeper';
 
-var classSelection = {
+var classSelection$1 = {
   onEnter: (guid, state, dispatch) => {
     dispatch(message(gateKeeper, guid, 'Listen buddy, we have rules here, and the rules are: ' + 'Every fucker entering that town behind me must be on the list I have here. If not...'));
     dispatch(message('GM', guid, 'Gate keeper looks at amulet you have on your neck.'));
@@ -250,17 +349,37 @@ var classSelection = {
   }
 };
 
-function name(state, guid) {
-  return state.contexts[guid].shared.name;
+function client(rootState, guid) {
+  return rootState.contexts[guid].shared;
 }
 
-function className(state, guid) {
-  return state.contexts[guid].shared.className;
+function name(state) {
+  return state.name;
+}
+
+function className(state) {
+  return state.className;
+}
+
+function actionState(state) {
+  return state.actionState;
+}
+
+function actionStateCount(state) {
+  return actionState(state).length;
+}
+
+function currentActionState(state) {
+  return state.actionState[state.actionState.length - 1];
+}
+
+function currentActionStateName(state) {
+  return currentActionState(state).name;
 }
 
 const GM = 'GM';
 
-var townLobby = {
+var townLobby$1 = {
   onEnter: (guid, state, dispatch) => {
     dispatch(message(GM, guid, 'You are entering the town area. You see your friends here.'));
   },
@@ -271,35 +390,71 @@ var townLobby = {
     if (command === '/roll') {
       dispatch(pushState(guid, 'rollDices'));
     } else {
-      dispatch(message(`${ name(state, guid) }[${ className(state, guid) }]`, 'all', command));
+      dispatch(message(`${ name(client(state, guid)) }[${ className(client(state, guid)) }]`, 'all', command));
     }
   }
 };
 
-var rollDices = {
+function numberOfRerolls(state) {
+  return currentActionState(state).numberOfRolls || 0;
+}
+
+function rolledDices(state) {
+  return currentActionState(state).rolledDices || [];
+}
+
+function onFinishRolling(state, guid$$1, dispatch) {
+  const player = `${ name(client(state, guid$$1)) }[${ className(client(state, guid$$1)) }]`;
+  dispatch(message('GM', 'all', `${ player } is rolling: ${ rolledDices(client(state, guid$$1)) }`));
+  dispatch(popState(guid$$1));
+}
+
+var rollDices$1 = {
   onEnter: (guid$$1, state, dispatch) => {
-    const player = `${ name(state, guid$$1) }[${ className(state, guid$$1) }]`;
-    dispatch(message('GM', 'all', `${ player } is rolling dices, result:`));
-    dispatch(message('GM', 'all', `${ [randomInt(1, 6), randomInt(1, 6), randomInt(1, 6), randomInt(1, 6)] }`));
-    dispatch(popState(guid$$1));
+    const firstRoll = [randomInt(1, 7), randomInt(1, 7), randomInt(1, 7), randomInt(1, 7)];
+    dispatch(roll(guid$$1, firstRoll));
+    dispatch(message('GM', guid$$1, `Your initial roll is: ${ firstRoll }.` + 'If you want to reroll, type /reroll <number> ... <number>. Where <number> is index of dice you want to reroll or /keep'));
   },
-  onCommand: (guid$$1, state, dispatch, command) => {}
+  onCommand: (guid$$1, state, dispatch, command) => {
+    if (command.startsWith('/reroll')) {
+      const dices = uniqueArray(command.replace('/reroll', '').split(' ').map(el => +el));
+      const currentDices = rolledDices(client(state, guid$$1));
+      log.info('currentDices ', currentDices);
+      const newDices = currentDices.map((el, index) => {
+        if (dices.includes(index + 1)) {
+          return randomInt(1, 7);
+        } else {
+          return el;
+        }
+      });
+      dispatch(message('GM', guid$$1, `After ${ numberOfRerolls(client(state, guid$$1)) } rerolls, you have: ${ newDices }`));
+
+      dispatch(roll(guid$$1, newDices));
+    } else if (command.startsWith('/keep')) {
+      onFinishRolling(state, guid$$1, dispatch);
+    } else {
+      dispatch(message('GM', guid$$1, 'Unrecognized command, please use /reroll <number> ... <number> or /keep'));
+    }
+    if (numberOfRerolls(client(state, guid$$1)) >= 2) {
+      onFinishRolling(state, guid$$1, dispatch);
+    }
+  }
 };
 
 
 
 var actionStateHandlers = Object.freeze({
-	introduction: introduction,
-	classSelection: classSelection,
-	townLobby: townLobby,
-	rollDices: rollDices
+	introduction: introduction$1,
+	classSelection: classSelection$1,
+	townLobby: townLobby$1,
+	rollDices: rollDices$1
 });
 
 function serverMiddleware({ getState, dispatch }) {
   return next => action => {
     if (action.type === 'CONTEXT_SPAWNED') {
       const result = next(action);
-      if (getState().contexts[action.guid].shared.actionState.length === 0) {
+      if (actionStateCount(client(getState(), action.guid)) === 0) {
         dispatch({
           type: 'CLIENT_STATE_ENTER_PUSH',
           guid: action.guid,
@@ -309,29 +464,30 @@ function serverMiddleware({ getState, dispatch }) {
       return result;
     } else if (action.type === 'CLIENT_STATE_ENTER_PUSH' || action.type === 'CLIENT_STATE_ENTER_REPLACE') {
       const result = next(action);
-      const currActionState = getState().contexts[action.guid].shared.actionState;
-      if (currActionState.length > 0) {
-        const name = currActionState[currActionState.length - 1];
-        log.info(`${ action.guid } entering state ${ name }`);
-        actionStateHandlers[name].onEnter(action.guid, getState(), dispatch);
+      if (actionStateCount(client(getState(), action.guid)) > 0) {
+        const name$$1 = currentActionStateName(client(getState(), action.guid));
+        log.info(`${ action.guid } entering state ${ name$$1 }`);
+        if (actionStateHandlers[name$$1].onEnter) {
+          actionStateHandlers[name$$1].onEnter(action.guid, getState(), dispatch);
+        }
       }
       return result;
     } else if (action.type === 'CLIENT_STATE_POP') {
-      const prevActionState = getState().contexts[action.guid].shared.actionState;
-      const fromStateName = prevActionState[prevActionState.length - 1];
+      const fromStateName = currentActionStateName(client(getState(), action.guid));
+      const fromStateInternalState = currentActionState(client(getState(), action.guid));
       const result = next(action);
-      const currActionState = getState().contexts[action.guid].shared.actionState;
-      const name = currActionState[currActionState.length - 1];
-
-      if (actionStateHandlers[name].onReturn) {
-        actionStateHandlers[name].onReturn(action.guid, getState(), dispatch, fromStateName);
+      if (actionStateCount(client(getState(), action.guid)) > 0) {
+        const name$$1 = currentActionStateName(client(getState(), action.guid));
+        log.info(`${ action.guid } returning from ${ fromStateName } state  to ${ name$$1 } state`);
+        if (actionStateHandlers[name$$1].onReturn) {
+          actionStateHandlers[name$$1].onReturn(action.guid, getState(), dispatch, fromStateName, fromStateInternalState);
+        }
       }
       return result;
     } else if (action.type === 'COMMAND_REQUEST') {
-      const currActionState = getState().contexts[action.guid].shared.actionState;
-      if (currActionState.length > 0) {
-        const name = currActionState[currActionState.length - 1];
-        actionStateHandlers[name].onCommand(action.guid, getState(), dispatch, action.command);
+      if (actionStateCount(client(getState(), action.guid)) > 0) {
+        const name$$1 = currentActionStateName(client(getState(), action.guid));
+        actionStateHandlers[name$$1].onCommand(action.guid, getState(), dispatch, action.command);
       }
     } else {
       return next(action);
@@ -384,11 +540,7 @@ store.subscribe(function persistState() {
   if (currentState === undefined) {
     log.warn('Saving empty state.');
   } else {
-    fs.writeFile(stateFilePath, JSON.stringify(currentState, null, 2), function (err) {
-      if (err) {
-        return log.error(err);
-      }
-    });
+    fs.writeFileSync(stateFilePath, JSON.stringify(currentState, null, 2));
   }
 });
 

@@ -30,11 +30,7 @@ store.subscribe(function persistState(){
   if(currentState === undefined){
     log.warn('Saving empty state.')
   } else {
-    fs.writeFile(stateFilePath, JSON.stringify(currentState, null, 2), function(err) {
-      if(err) {
-        return log.error(err)
-      }
-    })
+    fs.writeFileSync(stateFilePath, JSON.stringify(currentState, null, 2))
   }
 })
 

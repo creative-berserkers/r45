@@ -1,9 +1,11 @@
-import {guid} from '../utils'
+import {guid as guidGenerator} from '../utils'
+import {changed} from '../utils'
+import actionStateReducer from './action-state-reducer'
 
 export function message(from, to, message){
   return {
     type: 'MESSAGE',
-    id: guid(),
+    id: guidGenerator(),
     from: from,
     guid: (to !== 'all'? to : undefined),
     to: to,
@@ -55,7 +57,7 @@ const initialState = {
   className: 'Noone',
   actionState:[],
   messages : [{
-    id : guid(),
+    id : guidGenerator(),
     from : 'Chat System',
     to : 'all',
     message : 'Welcome to chat'
@@ -64,18 +66,6 @@ const initialState = {
 
 export default function contextReducer(state = initialState, action){
   switch(action.type){
-    case 'CLIENT_STATE_ENTER_PUSH': return {
-      ...state,
-      actionState: state.actionState.concat(action.name)
-    }
-    case 'CLIENT_STATE_POP' : return {
-      ...state,
-      actionState: state.actionState.slice(0,state.actionState.length-1)
-    }
-    case 'CLIENT_STATE_ENTER_REPLACE' : return {
-      ...state,
-      actionState: state.actionState.slice(0,state.actionState.length-1).concat(action.name)
-    }
     case 'MESSAGE' : return {
       ...state,
       messages : state.messages.concat({
@@ -94,6 +84,9 @@ export default function contextReducer(state = initialState, action){
       className : action.name
     }
     case 'LOAD_CLIENT_STATE' : return action.state
-    default: return state
+    default: return changed(state, {
+      ...state,
+      actionState : actionStateReducer(state.actionState, action)
+    })
   }
 }

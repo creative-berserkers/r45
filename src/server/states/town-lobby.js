@@ -1,5 +1,6 @@
 import {message, pushState} from '../../model/context-reducer'
-import {name, className} from '../../selectors/shared-context'
+import {client} from '../../model/selectors/global'
+import {name, className} from '../../model/selectors/client'
 import log from '../log'
 
 const GM = 'GM'
@@ -15,7 +16,7 @@ export default {
     if(command === '/roll'){
       dispatch(pushState(guid, 'rollDices'))
     } else{
-      dispatch(message(`${name(state, guid)}[${className(state, guid)}]`, 'all', command))
+      dispatch(message(`${name(client(state, guid))}[${className(client(state, guid))}]`, 'all', command))
     }
   }
 }
