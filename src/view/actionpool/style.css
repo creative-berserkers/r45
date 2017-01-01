@@ -4,8 +4,18 @@
 }
 
 .actionComponent {
-  width: 12.5%;
+  width: 150px;
   height: 80%;
   margin: 10px;
-  background-color: grey;
+  background-color: black;
+  border: 1px solid;
+}
+
+.diceSlot {
+  position: relative;
+  top: -15px;
+  left: 110px;
+  /*border: 1px solid white;*/
+  width: 64px;
+  height: 64px;
 }

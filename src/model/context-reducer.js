@@ -56,6 +56,22 @@ const initialState = {
   name : 'Noname',
   className: 'Noone',
   actionState:[],
+  actions:[
+    {
+      name :'fireball',
+      slots: [{
+        require: 5,
+        dices:[]
+      }]
+    },
+    {
+      name :'throw',
+      slots: [{
+        require: 6,
+        dices:[]
+      }]
+    }
+  ],
   messages : [{
     id : guidGenerator(),
     from : 'Chat System',

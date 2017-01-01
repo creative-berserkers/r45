@@ -2,19 +2,31 @@
   background-color: black;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .dice {
-  font-size: 4em;
-  width: 64px;
-  height: 64px;
-  margin: 10px;
+  width: 36px;
+  height: 36px;
 }
 
 .diceLocked {
   border: 2px solid red;
+  background-size: 300px 150px;
+}
+
+.diceSpace {
+  margin: 10px;
+}
+
+.diceSlot {
+  width: 36px;
+  height: 36px;
+  background-size: 32px 32px;
 }
 
 .rerollButton {
-  height:100px;
+  height:80px;
+  background-color: black;
+  border: 1px solid;
 }

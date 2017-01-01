@@ -2,14 +2,16 @@
   height: 100%;
   display:grid;
   grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
-  grid-template-areas:  "chat";
+  grid-template-rows: 1fr 200px;
+  grid-template-areas:  "chat"
+                        "action";
 }
 
 .rollState {
-  grid-template-rows: 1fr 100px;
+  grid-template-rows: 1fr 100px 200px;
   grid-template-areas:  "chat"
-                        "dicepool";
+                        "dicepool"
+                        "action";
 }
 
 .chat {

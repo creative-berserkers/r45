@@ -113,11 +113,10 @@ var css$2 = {
     "dicePoolComponent": "mc035ae162_dicePoolComponent",
     "dice": "mc035ae162_dice",
     "diceLocked": "mc035ae162_diceLocked",
+    "diceSpace": "mc035ae162_diceSpace",
+    "diceSlot": "mc035ae162_diceSlot",
     "rerollButton": "mc035ae162_rerollButton"
 };
-
-const faces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-const colors = ['white', 'yellow', 'green', 'orange', 'blue', 'violet'];
 
 let DiceComponent = class DiceComponent extends React$1.Component {
 
@@ -128,16 +127,13 @@ let DiceComponent = class DiceComponent extends React$1.Component {
       lock,
       onClick } = this.props;
 
+    const imagePath = `/public/img/dices/${ face }_dots.png`;
+
     return React$1.createElement(
       'div',
       { className: `${ className } ${ css$2.dice } ${ lock ? css$2.diceLocked : '' }`,
-        style: { backgroundColor: colors[face - 1] },
         onClick: onClick },
-      React$1.createElement(
-        'span',
-        null,
-        faces[face - 1]
-      )
+      React$1.createElement('img', { src: imagePath, width: '32px', height: '32px' })
     );
   }
 };
@@ -157,7 +153,7 @@ let DicePoolComponent = class DicePoolComponent extends React$1.Component {
           } },
         'Reroll dices'
       ),
-      dices.map((number, index) => React$1.createElement(DiceComponent, { key: index, face: number, lock: locks[index], onClick: onLock.bind(undefined, index) }))
+      dices.map((number, index) => React$1.createElement(DiceComponent, { className: css$2.diceSpace, key: index, face: number, lock: locks[index], onClick: onLock.bind(undefined, index) }))
     );
   }
 };
@@ -179,6 +175,91 @@ const mapDispatchToProps$2 = dispatch => ({
 
 var DicePoolContainer$1 = reactRedux.connect(mapStateToProps$2, mapDispatchToProps$2)(DicePoolComponent);
 
+var css$3 = {
+    "actionPoolComponent": "mc51ad5f45_actionPoolComponent",
+    "actionComponent": "mc51ad5f45_actionComponent",
+    "diceSlot": "mc51ad5f45_diceSlot"
+};
+
+let ActionComponent = class ActionComponent extends React$1.Component {
+  constructor() {
+    super();
+  }
+
+  render() {
+
+    const { name } = this.props;
+
+    return React$1.createElement(
+      'div',
+      { className: `${ this.props.className } ${ css$3.actionComponent }` },
+      name,
+      React$1.createElement(
+        'div',
+        { className: css$3.diceSlot },
+        this.props.children
+      )
+    );
+  }
+};
+
+let DiceSlotComponent = class DiceSlotComponent extends React$1.Component {
+
+  render() {
+    const {
+      className,
+      face,
+      onClick } = this.props;
+
+    const imagePath = `url(/public/img/dices/${ face }_dots_slot.png)`;
+    const style = {
+      background: imagePath,
+      backgroundSize: '32px 32px',
+      backgroundRepeat: 'no-repeat'
+    };
+
+    return React$1.createElement(
+      'div',
+      { className: `${ className } ${ css$2.diceSlot }`,
+        onClick: onClick, style: style },
+      this.props.children
+    );
+  }
+};
+
+let ActionPoolComponent = class ActionPoolComponent extends React$1.Component {
+  constructor() {
+    super();
+  }
+
+  render() {
+    const { className, actions } = this.props;
+    return React$1.createElement(
+      'div',
+      { className: `${ this.props.className } ${ css$3.actionPoolComponent }` },
+      actions.map(action => React$1.createElement(
+        ActionComponent,
+        { name: action.name },
+        React$1.createElement(DiceSlotComponent, { face: 6 }),
+        React$1.createElement(
+          DiceSlotComponent,
+          { face: 4 },
+          React$1.createElement(DiceComponent, { face: 4 })
+        ),
+        React$1.createElement(DiceSlotComponent, { face: 2 })
+      ))
+    );
+  }
+};
+
+const mapStateToProps$3 = state => ({
+  actions: state.actions
+});
+
+const mapDispatchToProps$3 = dispatch => ({});
+
+var ActionPoolContainer$1 = reactRedux.connect(mapStateToProps$3, mapDispatchToProps$3)(ActionPoolComponent);
+
 let AppContainer = class AppContainer extends React$1.Component {
   constructor() {
     super();
@@ -192,13 +273,15 @@ let AppContainer = class AppContainer extends React$1.Component {
         'div',
         { className: `${ css.mainContainer } ${ css.rollState }` },
         React$1.createElement(MessageLogContainer$2, { className: css.chat }),
-        React$1.createElement(DicePoolContainer$1, { className: css.dicepool })
+        React$1.createElement(DicePoolContainer$1, { className: css.dicepool }),
+        React$1.createElement(ActionPoolContainer$1, { className: css.action })
       );
     } else {
       return React$1.createElement(
         'div',
         { className: css.mainContainer },
-        React$1.createElement(MessageLogContainer$2, { className: css.chat })
+        React$1.createElement(MessageLogContainer$2, { className: css.chat }),
+        React$1.createElement(ActionPoolContainer$1, { className: css.action })
       );
     }
   }
@@ -346,6 +429,19 @@ const initialState = {
   name: 'Noname',
   className: 'Noone',
   actionState: [],
+  actions: [{
+    name: 'fireball',
+    slots: [{
+      require: 5,
+      dices: []
+    }]
+  }, {
+    name: 'throw',
+    slots: [{
+      require: 6,
+      dices: []
+    }]
+  }],
   messages: [{
     id: guid(),
     from: 'Chat System',

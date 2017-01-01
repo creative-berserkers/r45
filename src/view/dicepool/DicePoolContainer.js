@@ -12,7 +12,7 @@ class DicePoolComponent extends React.Component {
 
     return <div className={`${className} ${css.dicePoolComponent}`}>
       <button className={css.rerollButton} onClick={(event)=>{onReroll()}}>Reroll dices</button>
-      {dices.map((number, index)=><DiceComponent key={index} face={number} lock={locks[index]} onClick={onLock.bind(undefined,index)}></DiceComponent>)}
+      {dices.map((number, index)=><DiceComponent className={css.diceSpace} key={index} face={number} lock={locks[index]} onClick={onLock.bind(undefined,index)}></DiceComponent>)}
     </div>
   }
 }
