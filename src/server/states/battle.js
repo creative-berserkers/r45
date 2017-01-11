@@ -1,14 +1,17 @@
-import {messageAction, idSelector} from '../../model/context-reducer'
+import {messageAction} from '../../model/context-reducer'
 import {pushStateAction} from '../../model/action-state-reducer'
 import {clientSelector} from '../../model/global-reducer'
+import log from '../log'
 
 const GM = 'GM'
 
 export default {
   onEnter: (guid, getState, dispatch)=>{
-    dispatch(messageAction(GM, guid, 'You are entering the town area. You see your friends here.'))
+    dispatch(messageAction(GM, guid, 'You are entering battle.'))
+    dispatch(pushStateAction(guid, 'rollDices'))
   },
   onReturn:(guid, getState, dispatch, fromState, returnedState)=>{
+    log.info(`${guid} Return from state: `, fromState, returnedState)
     if(fromState === 'rollDices'){
       dispatch(pushStateAction(guid, 'assignDices', {
         rolledDices : returnedState.rolledDices
@@ -17,10 +20,6 @@ export default {
   },
   onCommand:(guid, getState, dispatch, command)=>{
     const state = getState()
-    if(command === '/battle'){
-      dispatch(pushStateAction(guid, 'battle'))
-    } else{
-      dispatch(messageAction(idSelector(clientSelector(state, guid)), 'all', command))
-    }
+
   }
 }

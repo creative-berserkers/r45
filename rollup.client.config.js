@@ -32,7 +32,7 @@ export default {
       main: true
     }),
   ],
-  sourceMap: false,
+  sourceMap: true,
   dest: 'public/js/bundle.js',
   external: [
     'react-dom',

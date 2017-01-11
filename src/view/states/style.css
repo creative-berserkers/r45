@@ -1,0 +1,67 @@
+.defaultState {
+    height: 100%;
+    display:grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+}
+
+.introductionState {
+    grid-template-areas:  "chat"
+}
+
+.classSelectionState {
+    grid-template-areas:  "chat"
+}
+
+.townLobbyState {
+    grid-template-areas:  "chat"
+}
+
+.rollDicesState {
+    grid-template-rows: 1fr 100px 200px;
+    grid-template-areas:    "chat"
+                            "dicepool"
+                            "actionpool";
+}
+
+.assignDicesState {
+    grid-template-rows: 1fr 100px 200px;
+    grid-template-areas:    "chat"
+                            "dicepool"
+                            "actionpool";
+
+}
+
+.chat {
+    grid-area: chat;
+}
+
+.map {
+    grid-area: map;
+}
+
+.dicepool {
+    grid-area: dicepool;
+}
+
+.actionpool {
+    grid-area: actionpool;
+}
+
+.rerollButton {
+    height:80px;
+    background-color: black;
+    border: 1px solid;
+}
+
+.midButton {
+    height:80px;
+    background-color: black;
+    border: 1px solid;
+    margin: 5px;
+    min-width:50px;
+}
+
+.diceSpace {
+    margin: 10px;
+}

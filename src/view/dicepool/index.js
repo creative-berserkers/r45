@@ -1,3 +1,5 @@
-import DicePoolContainer from './DicePoolContainer'
+import DicePool from './DicePoolComponent'
+import Dice from './DiceComponent'
+import DiceSlot from './DiceSlotComponent'
 
-export default DicePoolContainer
+export {DicePool, Dice, DiceSlot}

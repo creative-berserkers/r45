@@ -1,11 +1,8 @@
-import css from './style.css'
 import * as React from 'react'
 import {connect} from 'react-redux'
 import {currentActionState} from '../model/selectors/client'
 
-import MessageLogContainer from './messagelog'
-import DicePoolContainer from './dicepool'
-import ActionPoolContainer from './actionpool'
+import * as clientStates from './client-states'
 
 class AppContainer extends React.Component {
   constructor() {
@@ -13,20 +10,11 @@ class AppContainer extends React.Component {
   }
 
   render(){
-    const actionState = this.props.actionState
-    const name = actionState ? actionState.name : 'none'
-    if(name === 'rollDices'){
-      return <div className={`${css.mainContainer} ${css.rollState}`}>
-        <MessageLogContainer className={css.chat}></MessageLogContainer>
-        <DicePoolContainer className={css.dicepool}></DicePoolContainer>
-        <ActionPoolContainer className={css.action}></ActionPoolContainer>
-      </div>
-    } else {
-      return <div className={css.mainContainer}>
-        <MessageLogContainer className={css.chat}></MessageLogContainer>
-        <ActionPoolContainer className={css.action}></ActionPoolContainer>
-      </div>
-    }
+    const {clientState} = this.props
+    if(!clientState) return <div>Loading...</div>
+
+    const StateContainer = clientStates[clientState.name]
+    return <StateContainer />
   }
 }
 
@@ -37,7 +25,7 @@ const mapDispatchToProps = function(dispatch) {
 
 const mapStateToProps = function(state) {
   return {
-    actionState: currentActionState(state)
+    clientState: currentActionState(state)
   }
 }
 

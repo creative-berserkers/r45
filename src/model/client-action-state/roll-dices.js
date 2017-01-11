@@ -1,21 +1,34 @@
 const ROLL = 'ROLL_DICES:ROLL'
 const LOCK = 'ROLL_DICES:LOCK'
 
-export function roll(guid, rolledDices){
+
+export function rollAction(guid, rolledDices) {
   return {
     type: ROLL,
-    guid : guid,
-    rolledDices : rolledDices
+    guid: guid,
+    rolledDices: rolledDices
   }
 }
-
-export function lock(guid, locks){
+export function lockAction(guid, locks) {
   return {
     type: LOCK,
     guid: guid,
-    locks : locks
+    locks: locks
   }
 }
+
+export function numberOfRerollsSelector(state){
+  return state.numberOfRolls
+}
+
+export function rolledDicesSelector(state) {
+  return state.rolledDices
+}
+
+export function locksSelector(state){
+  return state.locks
+}
+
 
 const initialState = {
   name: 'rollDices',

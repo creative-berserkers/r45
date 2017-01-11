@@ -2,6 +2,10 @@ import sharedContextReducer from './context-reducer'
 import {combineReducers} from 'redux'
 import {changed} from '../utils'
 
+export function clientSelector(rootState, guid){
+  return rootState.contexts[guid].shared
+}
+
 const initialState = {
   connected : false,
   shared : sharedContextReducer(undefined, {type:'@INIT@'})
@@ -30,6 +34,7 @@ function allContextsReducer(state = {}, action){
     case 'CONTEXT_DESPAWNED': return {...state, [action.guid]: clientContextReducer(state[action.guid], action)}
     default : return changed(state, Object.keys(state).reduce((newState, context) => {
       if(action.guid){
+        if(!context) throw Error('Should not be null')
         if(action.guid === context){
           newState[context] = clientContextReducer(state[context], action)
         } else {

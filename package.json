@@ -11,6 +11,7 @@
     "build" : "yarn run build:all",
     "start": "node server.bundle.js",
     "debug": "node --inspect --debug-brk server.bundle.js",
+    "debug:ext": "./node_modules/.bin/node-debug --hidden node_modules/ --debug-brk false server.bundle.js",
     "lint": "eslint src",
     "test": "find ./src -name '*.spec.js' | xargs mocha  --compilers js:babel-core/register --require babelhook --reporter spec"
   },

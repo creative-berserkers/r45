@@ -1,13 +1,17 @@
 import * as actionStateHandlers from './../states'
 import log from '../log'
-import {client} from '../../model/selectors/global'
-import {actionStateCount, currentActionStateName, currentActionState} from '../../model/selectors/client'
+import {clientSelector} from '../../model/global-reducer'
+import {
+  actionStateCountSelector,
+  currentActionStateNameSelector,
+  currentActionStateSelector
+} from '../../model/context-reducer'
 
-export default function serverMiddleware({ getState, dispatch }) {
+export default function serverMiddleware({getState, dispatch}) {
   return (next) => (action) => {
     if (action.type === 'CONTEXT_SPAWNED') {
       const result = next(action)
-      if (actionStateCount(client(getState(), action.guid)) === 0) {
+      if (actionStateCountSelector(clientSelector(getState(), action.guid)) === 0) {
         dispatch({
           type: 'CLIENT_STATE_ENTER_PUSH',
           guid: action.guid,
@@ -17,29 +21,29 @@ export default function serverMiddleware({ getState, dispatch }) {
       return result
     } else if (action.type === 'CLIENT_STATE_ENTER_PUSH' || action.type === 'CLIENT_STATE_ENTER_REPLACE') {
       const result = next(action)
-      if (actionStateCount(client(getState(), action.guid)) > 0) {
-        const name = currentActionStateName(client(getState(), action.guid))
+      if (actionStateCountSelector(clientSelector(getState(), action.guid)) > 0) {
+        const name = currentActionStateNameSelector(clientSelector(getState(), action.guid))
         log.info(`${action.guid} entering state ${name}`)
-        if(actionStateHandlers[name].onEnter){
+        if (actionStateHandlers[name].onEnter) {
           actionStateHandlers[name].onEnter(action.guid, getState, dispatch)
         }
       }
       return result
-    } else if(action.type === 'CLIENT_STATE_POP'){
-      const fromStateName = currentActionStateName(client(getState(), action.guid))
-      const fromStateInternalState = currentActionState(client(getState(), action.guid))
+    } else if (action.type === 'CLIENT_STATE_POP') {
+      const fromStateName = currentActionStateNameSelector(clientSelector(getState(), action.guid))
+      const fromStateInternalState = currentActionStateSelector(clientSelector(getState(), action.guid))
       const result = next(action)
-      if (actionStateCount(client(getState(), action.guid)) > 0) {
-        const name = currentActionStateName(client(getState(), action.guid))
+      if (actionStateCountSelector(clientSelector(getState(), action.guid)) > 0) {
+        const name = currentActionStateNameSelector(clientSelector(getState(), action.guid))
         log.info(`${action.guid} returning from ${fromStateName} state  to ${name} state`)
         if (actionStateHandlers[name].onReturn) {
           actionStateHandlers[name].onReturn(action.guid, getState, dispatch, fromStateName, fromStateInternalState)
         }
       }
       return result
-    } else if(action.type === 'COMMAND_REQUEST'){
-      if (actionStateCount(client(getState(), action.guid)) > 0) {
-        const name = currentActionStateName(client(getState(), action.guid))
+    } else if (action.type === 'COMMAND_REQUEST') {
+      if (actionStateCountSelector(clientSelector(getState(), action.guid)) > 0) {
+        const name = currentActionStateNameSelector(clientSelector(getState(), action.guid))
         actionStateHandlers[name].onCommand(action.guid, getState, dispatch, action.command)
       }
     } else {

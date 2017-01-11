@@ -1,3 +1,4 @@
+import MessageLog from './MessageLogComponent'
+import Message from './MessageComponent'
 
-import MessageLogContainer from './MessageLogContainer'
-export default MessageLogContainer
+export {MessageLog, Message }

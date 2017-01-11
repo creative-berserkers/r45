@@ -11,11 +11,14 @@ export default function serverMiddleware(clientGuidToSocket, { getState, dispatc
 
       const stateChanged = !shallowEqual(stateBeforeRequest.contexts[key].shared, stateAfterRequest.contexts[key].shared)
       const targetSocket = clientGuidToSocket[key]
-      if(stateChanged){
+      if(stateChanged && targetSocket){
         log.info(`After ${action.type} state for ${key} changed, sending action`)
         targetSocket.emit('action', action)
       } else {
         log.info(`After ${action.type} state for ${key} is same`)
+      }
+      if(!targetSocket){
+        log.warn(`Client ${key} disconnected and is not receiving state changes`)
       }
     })
     return result
