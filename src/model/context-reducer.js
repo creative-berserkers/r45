@@ -58,6 +58,10 @@ export function currentActionStateSelector(state){
   return state.actionState[state.actionState.length - 1]
 }
 
+export function lastActionStateSelector(state, name){
+  return state.actionState.find(s => s.name === name)
+}
+
 export function currentActionStateNameSelector(state){
   return currentActionStateSelector(state).name
 }

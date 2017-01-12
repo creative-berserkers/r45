@@ -248,7 +248,7 @@ function assignDices(state = initialState$6, action) {
 
 const initialState$7 = {
   name: 'battle',
-  battlefield: [{
+  groups: [{
     id: 'group1',
     unitrefs: ['orc1', 'orc2']
   }, {
@@ -419,6 +419,8 @@ function actionStateCountSelector(state) {
 function currentActionStateSelector(state) {
   return state.actionState[state.actionState.length - 1];
 }
+
+
 
 function currentActionStateNameSelector(state) {
   return currentActionStateSelector(state).name;

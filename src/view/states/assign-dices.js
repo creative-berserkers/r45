@@ -9,7 +9,7 @@ import Message from '../components/Message'
 import Dice from '../components/Dice'
 import DiceSlot from '../components/DiceSlot'
 import Action from '../components/Action'
-import {currentDicesSelector, assignedActionsSelector} from '../../model/client-action-state/assign-dices'
+import {currentDicesSelector, assignedActionsSelector} from '../../model/states/assign-dices'
 
 class AssignActionsContainer extends React.Component {
   constructor() {

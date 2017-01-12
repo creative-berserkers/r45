@@ -181,9 +181,13 @@ function assignDices(state = initialState$5, action) {
   }
 }
 
+function groupsSelector(state) {
+  return state.groups;
+}
+
 const initialState$6 = {
   name: 'battle',
-  battlefield: [{
+  groups: [{
     id: 'group1',
     unitrefs: ['orc1', 'orc2']
   }, {
@@ -286,6 +290,10 @@ function currentActionStateSelector(state) {
   return state.actionState[state.actionState.length - 1];
 }
 
+function lastActionStateSelector(state, name) {
+  return state.actionState.find(s => s.name === name);
+}
+
 
 
 const initialState = {
@@ -358,10 +366,12 @@ var css = {
     "townLobbyState": "mcbcd0e2a3_townLobbyState",
     "rollDicesState": "mcbcd0e2a3_rollDicesState",
     "assignDicesState": "mcbcd0e2a3_assignDicesState",
+    "battleState": "mcbcd0e2a3_battleState",
     "chat": "mcbcd0e2a3_chat",
     "map": "mcbcd0e2a3_map",
     "dicepool": "mcbcd0e2a3_dicepool",
     "actionpool": "mcbcd0e2a3_actionpool",
+    "battlefield": "mcbcd0e2a3_battlefield",
     "rerollButton": "mcbcd0e2a3_rerollButton",
     "midButton": "mcbcd0e2a3_midButton",
     "diceSpace": "mcbcd0e2a3_diceSpace"
@@ -592,12 +602,12 @@ function DiceSlot({
   );
 }
 
-function Action({ className, name, children }) {
-  return React$1.createElement(
+function Action$1({ className, name, children }) {
+  return React.createElement(
     'div',
     { className: `${ className } ${ css$1.actionComponent }` },
     name,
-    React$1.createElement(
+    React.createElement(
       'div',
       { className: css$1.diceSlot },
       children
@@ -637,7 +647,7 @@ let RollDicesContainer = class RollDicesContainer extends React$1.Component {
         HorizontalList,
         { className: css.actionpool },
         actions.map((action, actionIndex) => React$1.createElement(
-          Action,
+          Action$1,
           { key: actionIndex, name: action.name },
           action.slots.map((slot, slotIndex) => React$1.createElement(DiceSlot, { key: slotIndex, face: slot.require }))
         ))
@@ -712,7 +722,7 @@ let AssignActionsContainer = class AssignActionsContainer extends React$1.Compon
         HorizontalList,
         { className: css.actionpool },
         actions.map((action, actionIndex) => React$1.createElement(
-          Action,
+          Action$1,
           { key: actionIndex, name: action.name },
           action.slots.map((slot, slotIndex) => React$1.createElement(
             DiceSlot,
@@ -756,15 +766,25 @@ let BattleComponent = class BattleComponent extends React$1.Component {
   }
 
   render() {
-    const { messages, onSend } = this.props;
+    const { messages, onSend, groups, actions } = this.props;
 
     return React$1.createElement(
       'div',
-      { className: `${ css.defaultState } ${ css.townLobbyState }` },
+      { className: `${ css.defaultState } ${ css.battleState }` },
       React$1.createElement(
         MessageLog,
         { onSend: onSend, className: css.chat },
         messages.map(({ id, from, message }) => React$1.createElement(Message, { key: id, from: from, message: message }))
+      ),
+      React$1.createElement(
+        HorizontalList,
+        { className: css.battlefield },
+        groups.map(({ name }, groupIndex) => React$1.createElement(Group, { key: groupIndex, name: name }))
+      ),
+      React$1.createElement(
+        HorizontalList,
+        { className: css.actionpool },
+        actions.map((action, actionIndex) => React$1.createElement(Action, { key: actionIndex, name: action.name }))
       )
     );
   }
@@ -779,7 +799,9 @@ const mapStateToDispatch$5 = dispatch => {
 
 const mapStateToProps$6 = state => {
   return {
-    messages: state.messages
+    messages: state.messages,
+    groups: groupsSelector(lastActionStateSelector(state, 'battle')),
+    actions: state.actions
   };
 };
 

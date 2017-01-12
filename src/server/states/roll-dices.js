@@ -2,7 +2,7 @@ import {messageAction, currentActionStateSelector} from '../../model/context-red
 import {popStateAction} from '../../model/action-state-reducer'
 import {clientSelector} from '../../model/global-reducer'
 import {randomInt} from '../../utils'
-import {rollAction, lockAction, numberOfRerollsSelector, rolledDicesSelector, locksSelector} from '../../model/client-action-state/roll-dices'
+import {rollAction, lockAction, numberOfRerollsSelector, rolledDicesSelector, locksSelector} from '../../model/states/roll-dices'
 
 function onFinishRolling(getState, guid, dispatch) {
   dispatch(popStateAction(guid))

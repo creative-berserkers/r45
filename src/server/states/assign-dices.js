@@ -11,7 +11,7 @@ import {
   assignedActionsSelector,
   assignDiceAction,
   resetAction
-} from '../../model/client-action-state/assign-dices'
+} from '../../model/states/assign-dices'
 import {popStateAction} from '../../model/action-state-reducer'
 
 

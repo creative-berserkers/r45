@@ -1,6 +1,11 @@
+
+export function groupsSelector(state){
+  return state.groups
+}
+
 const initialState = {
   name: 'battle',
-  battlefield:[{
+  groups:[{
     id:'group1',
     unitrefs: ['orc1', 'orc2'],
   },{

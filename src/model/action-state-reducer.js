@@ -1,5 +1,5 @@
 import {shallowEqual} from '../utils'
-import * as clientActionReducers from './client-action-state'
+import * as clientActionReducers from './states'
 
 const CLIENT_STATE_ENTER_PUSH = 'CLIENT_STATE_ENTER_PUSH'
 const CLIENT_STATE_POP = 'CLIENT_STATE_POP'

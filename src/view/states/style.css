@@ -32,6 +32,13 @@
 
 }
 
+.battleState {
+    grid-template-rows: 1fr 200px 200px;
+    grid-template-areas:    "chat"
+                            "battlefield"
+                            "actionpool";
+}
+
 .chat {
     grid-area: chat;
 }
@@ -46,6 +53,10 @@
 
 .actionpool {
     grid-area: actionpool;
+}
+
+.battlefield {
+    grid-area: battlefield;
 }
 
 .rerollButton {
