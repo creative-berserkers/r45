@@ -29,7 +29,7 @@ export default {
       main: true
     })
   ],
-  sourceMap: false,
+  sourceMap: true,
   dest: 'server.bundle.js',
   external: [
     'redux',

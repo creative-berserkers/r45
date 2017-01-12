@@ -1,6 +1,10 @@
 import sharedContextReducer from './context-reducer'
-import redux from 'redux'
+import {combineReducers} from 'redux'
 import {changed} from '../utils'
+
+export function clientSelector(rootState, guid){
+  return rootState.contexts[guid].shared
+}
 
 const initialState = {
   connected : false,
@@ -26,15 +30,25 @@ function clientContextReducer(state = initialState, action){
 
 function allContextsReducer(state = {}, action){
   switch(action.type){
-    case 'CONTEXT_SPAWNED': return {...state, [action.id]: clientContextReducer(state[action.id], action)}
-    case 'CONTEXT_DESPAWNED': return {...state, [action.id]: clientContextReducer(state[action.id], action)}
+    case 'CONTEXT_SPAWNED': return {...state, [action.guid]: clientContextReducer(state[action.guid], action)}
+    case 'CONTEXT_DESPAWNED': return {...state, [action.guid]: clientContextReducer(state[action.guid], action)}
     default : return changed(state, Object.keys(state).reduce((newState, context) => {
-      newState[context] = clientContextReducer(state[context], action)
+      if(action.guid){
+        if(!context) throw Error('Should not be null')
+        if(action.guid === context){
+          newState[context] = clientContextReducer(state[context], action)
+        } else {
+          newState[context] = state[context]
+        }
+      } else {
+        newState[context] = clientContextReducer(state[context], action)
+      }
+
       return newState
     }, {}))
   }
 }
 
-export default redux.combineReducers({
+export default combineReducers({
   contexts : allContextsReducer
 })

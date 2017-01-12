@@ -7,11 +7,19 @@ import log from './log'
 import serverIO from './server-io'
 
 const app = express()
+const host = '0.0.0.0'
+const port = process.env.PORT || 8080
 
-app.use('/static', express.static('public'))
+process.env.PWD = process.cwd()
 
-app.get('*', function(req, res) {
-  res.sendFile(path.join(__dirname, 'public/index.html'))
+app.use('/public', express.static(path.join(process.env.PWD, 'public')))
+
+app.get('/favicon.ico', function(req, res) {
+  res.sendFile(path.join(process.env.PWD, 'public/favicon.ico'))
+})
+
+app.get('/', function(req, res) {
+  res.sendFile(path.join(process.env.PWD, 'public/index.html'))
 })
 
 const server = http.createServer(app)
@@ -19,9 +27,9 @@ const io = socketIO(server)
 
 io.on('connection', serverIO.bind(undefined, io))
 
-server.listen(3000, 'localhost', function(err) {
+server.listen(port, host, function(err) {
   if (err) log.error(err)
   else {
-    log.info('Listening at http://localhost:3000')
+    log.info(`Listening at http://${host}:${port}`)
   }
 })

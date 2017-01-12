@@ -1,28 +1,38 @@
 import fs from 'fs'
 import path from 'path'
 import globalReducer from 'model/global-reducer'
-import chatActionHandler from '../action-handlers/chat'
+import serverMiddleware from './middleware/server-middleware'
+import responseMiddleware from './middleware/response-middleware'
 import log from './log'
-import {shallowEqual} from './utils'
+import {createStore, applyMiddleware} from 'redux'
 
-const Redux = require('redux')
+const dataDirPath = path.join(__dirname, 'data')
 const stateFilePath = path.join(__dirname, 'data/state.json')
-
-let stateStr = fs.readFileSync(stateFilePath, 'utf8')
-if(stateStr.trim().length === 0) stateStr = '{}'
-const store = Redux.createStore(globalReducer, JSON.parse(stateStr))
-
-store.subscribe(function persistState(){
-  const currentState = store.getState()
-  fs.writeFile(stateFilePath, JSON.stringify(currentState, null, 2), function(err) {
-    if(err) {
-      return log.error(err)
-    }
-  })
-})
 
 const clientSocketIdToGuid = {}
 const clientGuidToSocket = {}
+
+if (!fs.existsSync(dataDirPath)){
+  fs.mkdirSync(dataDirPath)
+}
+let stateStr = '{}'
+try {
+  stateStr = fs.readFileSync(stateFilePath, 'utf8')
+} catch(e) {
+  fs.writeFileSync(stateFilePath, '{}', { flag: 'wx' })
+}
+
+if(stateStr.trim().length === 0) stateStr = '{}'
+const store = createStore(globalReducer, JSON.parse(stateStr), applyMiddleware(serverMiddleware,responseMiddleware.bind(undefined,clientGuidToSocket)))
+
+store.subscribe(function persistState(){
+  const currentState = store.getState()
+  if(currentState === undefined){
+    log.warn('Saving empty state.')
+  } else {
+    fs.writeFileSync(stateFilePath, JSON.stringify(currentState, null, 2))
+  }
+})
 
 export default function onSocket(io, socket){
   const ipAddress = socket.request.connection.remoteAddress
@@ -35,16 +45,16 @@ export default function onSocket(io, socket){
     log.info(`client ??@${clientId} authenticated as ${authToken}`)
     store.dispatch({
       type: 'CONTEXT_SPAWNED',
-      id: clientSocketIdToGuid[socket.id]
+      guid: authToken
     })
-    socket.send('initial_state', store.getState().contexts[authToken].shared)
+    socket.emit('initial_state', store.getState().contexts[authToken].shared)
   })
 
   socket.on('disconnect', function() {
     log.info(`client ${clientSocketIdToGuid[socket.id]}@${clientId} disconnected`)
     store.dispatch({
       type: 'CONTEXT_DESPAWNED',
-      id: clientSocketIdToGuid[socket.id]
+      guid: clientSocketIdToGuid[socket.id]
     })
     clientGuidToSocket[clientSocketIdToGuid[socket.id]] = undefined
     clientSocketIdToGuid[socket.id] = undefined
@@ -53,29 +63,10 @@ export default function onSocket(io, socket){
   socket.on('command_request', function(action){
     if(action.type !== 'COMMAND_REQUEST') return
     log.info(`client ${clientSocketIdToGuid[socket.id]}@${clientId} command:${JSON.stringify(action.command)}`)
-
-    chatActionHandler(store.getState(), {
+    store.dispatch({
       type: action.type,
-      command: action.command,
-      id : clientSocketIdToGuid[socket.id]
-    }, (action)=>{
-      log.info(`dispatching ${JSON.stringify(action)}`)
-      const stateBeforeRequest = store.getState()
-      store.dispatch(action)
-      const stateAfterRequest = store.getState()
-      Object.keys(stateBeforeRequest.contexts).forEach((key) => {
-
-        const stateChanged = !shallowEqual(stateBeforeRequest.contexts[key].shared, stateAfterRequest.contexts[key].shared)
-        const targetSocket = clientGuidToSocket[key]
-        if(stateChanged){
-          log.info(`After ${action.type} state for ${key} changed, sending action`)
-          targetSocket.send('action', action)
-        } else {
-          log.info(`After ${action.type} state for ${key} is same`)
-        }
-      })
-
+      guid: clientSocketIdToGuid[socket.id],
+      command: action.command
     })
-
   })
 }
