@@ -1,12 +1,15 @@
 import css from './style.css'
 import * as React from 'react'
 import {connect} from 'react-redux'
-import {currentActionState} from '../../model/selectors/client'
+import {currentActionStateSelector} from '../../model/context-reducer'
 
-import {MessageLog, Message} from '../messagelog'
-import {DicePool, Dice, DiceSlot} from '../dicepool'
-import {ActionPool, Action} from '../actionpool'
-import {currentDices, assignedActions} from '../../model/selectors/state/assign-dices'
+import HorizontalList from '../layout/HorizontalList'
+import MessageLog from '../components/MessageLog'
+import Message from '../components/Message'
+import Dice from '../components/Dice'
+import DiceSlot from '../components/DiceSlot'
+import Action from '../components/Action'
+import {currentDicesSelector, assignedActionsSelector} from '../../model/client-action-state/assign-dices'
 
 class AssignActionsContainer extends React.Component {
   constructor() {
@@ -31,12 +34,12 @@ class AssignActionsContainer extends React.Component {
         {messages.map(({id, from, message}) => <Message key={id} from={from}
                                                         message={message}/>)}
       </MessageLog>
-      <DicePool>
+      <HorizontalList className={css.dicepool}>
         <button className={css.midButton} onClick={onReset}>Reset dices</button>
         <button className={css.midButton} onClick={onDone}>Done</button>
         {dices.map((number, index) => <Dice className={css.diceSpace} key={index} face={number}/>)}
-      </DicePool>
-      <ActionPool className={css.actionpool}>
+      </HorizontalList>
+      <HorizontalList className={css.actionpool}>
         {actions.map((action, actionIndex) =>
           <Action key={actionIndex} name={action.name}>
             {action.slots.map((slot, slotIndex) => <DiceSlot key={slotIndex} face={slot.require}
@@ -44,7 +47,7 @@ class AssignActionsContainer extends React.Component {
               { this.renderDice(assignedActions, actionIndex, slotIndex)}
             </DiceSlot>)}
           </Action>)}
-      </ActionPool>
+      </HorizontalList>
     </div>
   }
 }
@@ -63,8 +66,8 @@ const mapStateToDispatch = (dispatch) => {
 
 const mapStateToProps = (state) => {
   return {
-    dices: currentDices(currentActionState(state)),
-    assignedActions : assignedActions(currentActionState(state)),
+    dices: currentDicesSelector(currentActionStateSelector(state)),
+    assignedActions : assignedActionsSelector(currentActionStateSelector(state)),
     messages: state.messages,
     actions: state.actions
   }

@@ -1,7 +1,7 @@
 import css from './style.css'
 import * as React from 'react'
 
-export default class MessageLogContainer extends React.Component {
+export default class MessageLog extends React.Component {
 
   constructor() {
     super()

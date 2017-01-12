@@ -1,8 +1,8 @@
 import * as React from 'react'
 import {connect} from 'react-redux'
-import {currentActionState} from '../model/selectors/client'
+import {currentActionStateSelector} from '../model/context-reducer'
 
-import * as clientStates from './client-states'
+import * as clientStates from './states'
 
 class AppContainer extends React.Component {
   constructor() {
@@ -25,7 +25,7 @@ const mapDispatchToProps = function(dispatch) {
 
 const mapStateToProps = function(state) {
   return {
-    clientState: currentActionState(state)
+    clientState: currentActionStateSelector(state)
   }
 }
 

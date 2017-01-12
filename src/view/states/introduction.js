@@ -2,7 +2,8 @@ import css from './style.css'
 import * as React from 'react'
 import {connect} from 'react-redux'
 
-import {MessageLog, Message} from '../messagelog'
+import MessageLog from '../components/MessageLog'
+import Message from '../components/Message'
 
 class IntroductionComponent extends  React.Component {
   constructor() {

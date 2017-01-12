@@ -1,7 +1,8 @@
-import introduction from './IntroductionContainer'
-import classSelection from './ClassSelectionContainer'
-import townLobby from './TownLobbyContainer'
-import rollDices from './RollDicesContainer'
-import assignDices from './AssignDicesContainer'
+import introduction from './introduction'
+import classSelection from './class-selection'
+import townLobby from './town-lobby'
+import rollDices from './roll-dices'
+import assignDices from './assign-dices'
+import battle from './battle'
 
-export {introduction, classSelection, townLobby, rollDices, assignDices}
+export {introduction, classSelection, townLobby, rollDices, assignDices, battle}
