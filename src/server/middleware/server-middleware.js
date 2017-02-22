@@ -1,50 +1,47 @@
-import * as actionStateHandlers from './../states'
-import log from '../log'
-import {clientSelector} from '../../model/global-reducer'
+import * as clientStateHandlers from './../states'
+import {CLIENT_SPAWNED, clientSelector, CLIENT_ACTION, clientAction} from '../../model/server-reducer'
 import {
-  actionStateCountSelector,
-  currentActionStateNameSelector,
-  currentActionStateSelector
-} from '../../model/context-reducer'
+  CLIENT_STATE_PUSH,
+  CLIENT_STATE_POP,
+  currentClientStateNameSelector,
+  pushClientStateAction
+} from '../../model/client-reducer'
+import {SETUP} from '../../model/states/setup'
 
 export default function serverMiddleware({getState, dispatch}) {
   return (next) => (action) => {
-    if (action.type === 'CONTEXT_SPAWNED') {
-      const result = next(action)
-      if (actionStateCountSelector(clientSelector(getState(), action.guid)) === 0) {
-        dispatch({
-          type: 'CLIENT_STATE_ENTER_PUSH',
-          guid: action.guid,
-          name: 'introduction'
-        })
+    if(action.type === CLIENT_SPAWNED){
+      const result = next(action.action)
+      if (clientSelector(getState(), action.guid).length === 0) {
+        dispatch(clientAction(action.guid, pushClientStateAction(SETUP, {})))
       }
       return result
-    } else if (action.type === 'CLIENT_STATE_ENTER_PUSH' || action.type === 'CLIENT_STATE_ENTER_REPLACE') {
-      const result = next(action)
-      if (actionStateCountSelector(clientSelector(getState(), action.guid)) > 0) {
-        const name = currentActionStateNameSelector(clientSelector(getState(), action.guid))
-        log.info(`${action.guid} entering state ${name}`)
-        if (actionStateHandlers[name].onEnter) {
-          actionStateHandlers[name].onEnter(action.guid, getState, dispatch)
+    }
+    if (action.type === CLIENT_ACTION) {
+      switch (action.action.type) {
+        case CLIENT_STATE_PUSH : {
+          let fromState = undefined
+          if (clientSelector(getState(), action.guid).length > 0) {
+            fromState = currentClientStateNameSelector(clientSelector(getState(), action.guid))
+          }
+          const result = next(action.action)
+          const name = currentClientStateNameSelector(clientSelector(getState(), action.guid))
+          clientStateHandlers[name].onEnter(getState, dispatch, next, {...action, fromState})
+          return result
         }
-      }
-      return result
-    } else if (action.type === 'CLIENT_STATE_POP') {
-      const fromStateName = currentActionStateNameSelector(clientSelector(getState(), action.guid))
-      const fromStateInternalState = currentActionStateSelector(clientSelector(getState(), action.guid))
-      const result = next(action)
-      if (actionStateCountSelector(clientSelector(getState(), action.guid)) > 0) {
-        const name = currentActionStateNameSelector(clientSelector(getState(), action.guid))
-        log.info(`${action.guid} returning from ${fromStateName} state  to ${name} state`)
-        if (actionStateHandlers[name].onReturn) {
-          actionStateHandlers[name].onReturn(action.guid, getState, dispatch, fromStateName, fromStateInternalState)
+        case CLIENT_STATE_POP : {
+          const fromState = currentClientStateNameSelector(clientSelector(getState(), action.guid))
+          const result = next(action.action)
+          if (clientSelector(getState(), action.guid).length > 0) {
+            const name = currentClientStateNameSelector(clientSelector(getState(), action.guid))
+            clientStateHandlers[name].onReturn(getState, dispatch, next, {...action, fromState})
+          }
+          return result
         }
-      }
-      return result
-    } else if (action.type === 'COMMAND_REQUEST') {
-      if (actionStateCountSelector(clientSelector(getState(), action.guid)) > 0) {
-        const name = currentActionStateNameSelector(clientSelector(getState(), action.guid))
-        actionStateHandlers[name].onCommand(action.guid, getState, dispatch, action.command)
+        default : {
+          const name = currentClientStateNameSelector(clientSelector(getState(), action.guid))
+          return clientStateHandlers[name].onAction(getState, dispatch, next, action)
+        }
       }
     } else {
       return next(action)

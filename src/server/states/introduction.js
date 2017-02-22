@@ -1,5 +1,4 @@
-import {messageAction, setNameAction} from '../../model/context-reducer'
-import {setStateAction} from '../../model/action-state-reducer'
+import {messageAction, setPlayerNameAction} from '../../model/states/chat'
 
 export default {
   onEnter: (guid, getState, dispatch)=>{
@@ -12,7 +11,6 @@ export default {
     const name = command
     //dispatch(message('Gate Keeper', guid, `So... Your name is ${command}. I have never heard about you.`))
     //dispatch(message('GM', guid, 'Gate Keeper now looks at you even more suspiciously.'))
-    dispatch(setNameAction(guid, name))
-    dispatch(setStateAction(guid, 'classSelection'))
+    dispatch(setPlayerNameAction(guid, name))
   }
 }

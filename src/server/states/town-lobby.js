@@ -1,6 +1,6 @@
-import {messageAction, idSelector} from '../../model/context-reducer'
-import {pushStateAction} from '../../model/action-state-reducer'
-import {clientSelector} from '../../model/global-reducer'
+import {messageAction} from '../../model/states/chat'
+import {pushClientStateAction} from '../../model/client-reducer'
+//import {clientSelector} from '../../model/global-reducer'
 
 const GM = 'GM'
 
@@ -10,17 +10,17 @@ export default {
   },
   onReturn:(guid, getState, dispatch, fromState, returnedState)=>{
     if(fromState === 'rollDices'){
-      dispatch(pushStateAction(guid, 'assignDices', {
+      dispatch(pushClientStateAction('assignDices', {
         rolledDices : returnedState.rolledDices
-      }))
+      },guid))
     }
   },
   onCommand:(guid, getState, dispatch, command)=>{
     const state = getState()
     if(command === '/battle'){
-      dispatch(pushStateAction(guid, 'battle'))
+      dispatch(pushClientStateAction( 'battle', {}, guid))
     } else{
-      dispatch(messageAction(idSelector(clientSelector(state, guid)), 'all', command))
+      //dispatch(messageAction(idSelector(clientSelector(state, guid)), 'all', command))
     }
   }
 }

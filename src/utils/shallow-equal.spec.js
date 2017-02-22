@@ -1,7 +1,7 @@
 import {expect} from 'chai'
 import shallowEqual from './shallow-equal'
 
-describe('changed', ()=>{
+describe('shallow-equal', ()=>{
   it('should return true', ()=>{
     const oldState = {a:'1', b:'43'}
     const newState = {b:'43',a:'1'}

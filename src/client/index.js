@@ -1,7 +1,7 @@
 /*global __REDUX_DEVTOOLS_EXTENSION_COMPOSE__ */
 
 import AppContainer from '../view/AppContainer'
-import {contextReducer} from '../model'
+import contextReducer from '../model/client-reducer'
 import commandMiddleware from './client-io'
 import {createStore, applyMiddleware, compose} from 'redux'
 import {Provider} from 'react-redux'

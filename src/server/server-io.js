@@ -1,10 +1,11 @@
 import fs from 'fs'
 import path from 'path'
-import globalReducer from 'model/global-reducer'
+import globalReducer, {clientSpawnedAction, clientDespawnedAction, actionRequest} from 'model/server-reducer'
 import serverMiddleware from './middleware/server-middleware'
 import responseMiddleware from './middleware/response-middleware'
 import log from './log'
 import {createStore, applyMiddleware} from 'redux'
+import {clientAction} from '../model/server-reducer'
 
 const dataDirPath = path.join(__dirname, 'data')
 const stateFilePath = path.join(__dirname, 'data/state.json')
@@ -43,30 +44,21 @@ export default function onSocket(io, socket){
     clientSocketIdToGuid[socket.id] = authToken
     clientGuidToSocket[authToken] = socket
     log.info(`client ??@${clientId} authenticated as ${authToken}`)
-    store.dispatch({
-      type: 'CONTEXT_SPAWNED',
-      guid: authToken
-    })
+    store.dispatch(clientSpawnedAction(authToken))
     socket.emit('initial_state', store.getState().contexts[authToken].shared)
   })
 
   socket.on('disconnect', function() {
-    log.info(`client ${clientSocketIdToGuid[socket.id]}@${clientId} disconnected`)
-    store.dispatch({
-      type: 'CONTEXT_DESPAWNED',
-      guid: clientSocketIdToGuid[socket.id]
-    })
-    clientGuidToSocket[clientSocketIdToGuid[socket.id]] = undefined
+    const guid = clientSocketIdToGuid[socket.id]
+    log.info(`client ${guid}@${clientId} disconnected`)
+    store.dispatch(clientDespawnedAction(guid))
+    clientGuidToSocket[guid] = undefined
     clientSocketIdToGuid[socket.id] = undefined
   })
 
   socket.on('command_request', function(action){
-    if(action.type !== 'COMMAND_REQUEST') return
-    log.info(`client ${clientSocketIdToGuid[socket.id]}@${clientId} command:${JSON.stringify(action.command)}`)
-    store.dispatch({
-      type: action.type,
-      guid: clientSocketIdToGuid[socket.id],
-      command: action.command
-    })
+    const guid = clientSocketIdToGuid[socket.id]
+    log.info(`client ${guid}@${clientId} action: ${JSON.stringify(action)}`)
+    store.dispatch(clientAction(guid,action))
   })
 }

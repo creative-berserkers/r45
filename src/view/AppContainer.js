@@ -1,6 +1,6 @@
 import * as React from 'react'
 import {connect} from 'react-redux'
-import {currentActionStateSelector} from '../model/context-reducer'
+import {currentClientStateSelector} from '../model/client-reducer'
 
 import * as clientStates from './states'
 
@@ -25,7 +25,7 @@ const mapDispatchToProps = function(dispatch) {
 
 const mapStateToProps = function(state) {
   return {
-    clientState: currentActionStateSelector(state)
+    clientState: currentClientStateSelector(state)
   }
 }
 

@@ -1,5 +1,6 @@
 import guid from '../utils/guid'
 import log from './log'
+import {loadClientStateAction} from '../model/client-reducer'
 
 export default function command({ getState, dispatch }) {
   const socket = io()
@@ -17,10 +18,7 @@ export default function command({ getState, dispatch }) {
 
   socket.on('initial_state', function onInitialState(state){
     log.info('initial_state', state)
-    dispatch({
-      type: 'LOAD_CLIENT_STATE',
-      state: state
-    })
+    dispatch(loadClientStateAction(state))
   })
 
   socket.on('action', function onAction(action){

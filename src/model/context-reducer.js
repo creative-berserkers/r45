@@ -1,143 +1,176 @@
-import {guid as guidGenerator} from '../utils'
-import {changed} from '../utils'
-import actionStateReducer from './action-state-reducer'
+import * as clientStateReducers from './states'
 
+export const PLAYER_NAME_SET = 'PLAYER_NAME_SET'
+export const CLASS_ID_SET = 'CLASS_ID_SET'
+export const RACE_ID_SET = 'RACE_ID_SET'
+export const STACK_PUSH = 'STACK_PUSH'
+export const STACK_POP = 'STACK_POP'
+export const STACK_ACTION = 'STACK_ACTION'
 
-export function messageAction(from, to, message) {
+/**
+ * @typedef {{type: string, playerName: string}} PlayerNameAction
+ */
+
+/**
+ * @param {string} playerName
+ * @returns PlayerNameAction
+ */
+export function setPlayerNameAction(playerName) {
   return {
-    type: 'MESSAGE',
-    id: guidGenerator(),
-    from: from,
-    guid: (to !== 'all' ? to : undefined),
-    to: to,
-    message: message
+    type: PLAYER_NAME_SET,
+    playerName: playerName
   }
 }
 
-export function setNameAction(guid, name) {
+/**
+ * @typedef {{type: string, classId: string}} PlayerClassIdAction
+ */
+
+/**
+ * @param {string} classId
+ * @returns PlayerClassIdAction
+ */
+export function setPlayerClassIdAction(classId) {
   return {
-    type: 'CLIENT_SET_NAME',
-    guid: guid,
-    name: name
+    type: CLASS_ID_SET,
+    classId: classId
   }
 }
 
-export function setClassAction(guid, className) {
+/**
+ * @typedef {{type: string, raceId: string}} PlayerRaceIdAction
+ */
+
+/**
+ * @param {string} raceId
+ * @returns PlayerRaceIdAction
+ */
+export function setPlayerRaceIdAction(raceId) {
   return {
-    type: 'CLIENT_SET_CLASS',
-    guid: guid,
-    name: className
+    type: RACE_ID_SET,
+    raceId: raceId
   }
 }
 
-export function nameSelector(state){
-  return state.name
+/**
+ * @param action wrapped action
+ * @returns {{type: string, action: Object}}
+ */
+export function stackAction(action){
+  return {
+    type : STACK_ACTION,
+    action : action
+  }
 }
 
-export function classNameSelector(state){
-  return state.className
+/**
+ * @typedef {{type: string, name: string, initialState: *}} PushClientStateAction
+ */
+
+/**
+ * @param {string} name
+ * @param {*} initialState
+ * @returns {{type: string, name: string, initialState: *}}
+ */
+export function pushClientStateAction(name, initialState){
+  return {
+    type: STACK_PUSH ,
+    name: name,
+    initialState : initialState
+  }
 }
 
-export function idSelector(state){
-  return `${nameSelector(state)}[${classNameSelector(state)}]`
+export function popClientStateAction(returnState) {
+  return {
+    type: STACK_POP,
+    returnState : returnState
+  }
 }
 
-export function actionsSelector(state){
-  return state.actions
+/**
+ * @param {{classId:string}} state
+ * @returns {string}
+ */
+export function getClassId(state) {
+  return state.classId
 }
 
-export function actionStateSelector(state){
-  return state.actionState
+/**
+ * @param {{stack:Array}} state
+ * @returns {Array}
+ */
+export function getStack(state) {
+  return state.stack
 }
 
-export function actionStateCountSelector(state){
-  return actionStateSelector(state).length
+/**
+ * @param {{playerName:string}} state
+ * @returns {string}
+ */
+export function getPlayerName(state) {
+  return state.playerName
 }
 
-export function currentActionStateSelector(state){
-  return state.actionState[state.actionState.length - 1]
+/**
+ * @param {{stack:Array}} state
+ * @returns {Object}
+ */
+export function getLastStackState(state){
+  return state.stack[state.stack.length - 1]
 }
 
-export function lastActionStateSelector(state, name){
-  return state.actionState.find(s => s.name === name)
+/**
+ * @param {{stack:Array.<{name}>}} state
+ */
+export function getLastStackStateName(state){
+  return getLastStackState(state).name
 }
 
-export function currentActionStateNameSelector(state){
-  return currentActionStateSelector(state).name
+/**
+ * @param {{stack:Array.<{name}>}} state
+ * @param {string} name
+ * @returns {Object}
+ */
+export function getStackStateWithName(state, name){
+  return state.stack.find(s => s.name === name)
 }
-
 
 const initialState = {
-  name: 'Noname',
-  className: 'Noone',
-  actionState: [],
-  actions: [
-    {
-      name: 'Shield',
-      slots: [{
-        require: 1
-      }]
-    },
-    {
-      name: 'Maneuver',
-      slots: [{
-        require: 3
-      }]
-    },
-    {
-      name: 'Throw',
-      slots: [{
-        require: 6
-      }]
-    },
-    {
-      name: 'Fireball',
-      slots: [
-        {
-          require: 5
-        },
-        {
-          require: 6
-        }
-      ]
-    }
-  ],
-  messages: [{
-    id: guidGenerator(),
-    from: 'Chat System',
-    to: 'all',
-    message: 'Welcome to chat'
-  }]
+  playerName: 'Noname',
+  classId: 'mage',
+  raceId: 'none',
+  actions: [],
+  stack : []
 }
 
-export default function contextReducer(state = initialState, action) {
-  switch (action.type) {
-    case 'MESSAGE' :
+export default function contextReducer(state = initialState, action){
+  switch (action.type){
+    case PLAYER_NAME_SET :
       return {
         ...state,
-        messages: state.messages.concat({
-          id: action.id,
-          from: action.from,
-          to: action.to,
-          message: action.message
-        })
+        playerName: action.playerName
       }
-    case 'CLIENT_SET_NAME' :
+    case CLASS_ID_SET :
       return {
         ...state,
-        name: action.name
+        classId: action.classId
       }
-    case 'CLIENT_SET_CLASS' :
+    case RACE_ID_SET :
       return {
         ...state,
-        className: action.name
+        raceId: action.raceId
       }
-    case 'LOAD_CLIENT_STATE' :
-      return action.state
-    default:
-      return changed(state, {
+    case STACK_PUSH :
+      return {
         ...state,
-        actionState: actionStateReducer(state.actionState, action)
-      })
+        stack : [...state.stack, clientStateReducers[action.name](action.initialState, {type: '@INIT@'})]
+      }
+    case STACK_POP :
+      return {
+        ...state,
+        stack: state.stack.slice(0, state.length - 1)
+      }
+    case STACK_ACTION : return state.stack.slice(0,state.stack.length-1).concat(clientStateReducers[action.name](state.stack[state.stack.length -1], action.action))
+    default : return state
   }
 }

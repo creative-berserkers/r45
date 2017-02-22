@@ -1,3 +1,5 @@
+export const BATTLE = 'BATTLE'
+
 
 export function groupsSelector(state){
   return state.groups

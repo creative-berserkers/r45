@@ -1,6 +1,20 @@
-const initialState = {
-  'fireball': {
-    name: 'Fireball',
+export const initialState = {
+  'action_shield': {
+    slots: [{
+      require: 1
+    }]
+  },
+  'action_maneuver': {
+    slots: [{
+      require: 3
+    }]
+  },
+  'action_throw': {
+    slots: [{
+      require: 6
+    }]
+  },
+  'action_fireball': {
     slots: [
       {
         require: 5
@@ -9,15 +23,23 @@ const initialState = {
         require: 6
       }
     ]
-  },
-  'throw': {
-    name: 'Throw',
-    slots: [{
-      require: 6
-    }]
   }
 }
 
-export default function allActionsReducer(state = initialState, action) {
-  return state
+/**
+ * @typedef {{require:number}} Slot
+ * @typedef {{slots:Array.<Slot>}} Action
+ * @typedef {Object.<string, Action>} AllActionState
+ */
+
+/**
+ * @param {AllActionState} state
+ * @param {*} action
+ * @returns {AllActionState}
+ */
+export default function (state = initialState, action) {
+  switch (action.type) {
+    default :
+      return state
+  }
 }

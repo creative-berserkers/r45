@@ -8,12 +8,13 @@
     "build:all": "yarn run build:client && yarn run build:server",
     "watch:client": "node_modules/.bin/nodemon --watch src/client --watch src/model --watch src/view --watch src/utils -e js,css --exec \"yarn run build:client\"",
     "watch:server": "node_modules/.bin/nodemon --watch src/server --watch src/model --watch src/utils -e js --exec \"yarn run build:server && node server.bundle.js \"",
-    "build" : "yarn run build:all",
+    "build": "yarn run build:all",
     "start": "node server.bundle.js",
     "debug": "node --inspect --debug-brk server.bundle.js",
     "debug:ext": "./node_modules/.bin/node-debug --hidden node_modules/ --debug-brk false server.bundle.js",
     "lint": "eslint src",
-    "test": "find ./src -name '*.spec.js' | xargs mocha  --compilers js:babel-core/register --require babelhook --reporter spec"
+    "test": "mocha  --compilers js:babel-core/register --require babelhook --reporter spec -w src/**/*.spec.js",
+    "test:ava": "ava src/**/*.spec.js"
   },
   "engines": {
     "node": "7.3.0"
@@ -22,6 +23,7 @@
   "author": "Krzysztof Kabat (https://github.com/Odrinwhite)",
   "license": "CC0-1.0",
   "devDependencies": {
+    "ava": "^0.17.0",
     "babel": "^6.5.2",
     "babel-plugin-syntax-decorators": "^6.13.0",
     "babel-plugin-transform-class-properties": "^6.16.0",

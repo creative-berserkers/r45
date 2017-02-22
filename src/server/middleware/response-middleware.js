@@ -1,23 +1,28 @@
 import {shallowEqual} from '../../utils'
 import log from '../log'
+import {clientSelector} from '../../model/server-reducer';
 
-export default function serverMiddleware(clientGuidToSocket, { getState, dispatch }) {
+export default function serverMiddleware(clientGuidToSocket, {getState}) {
   return (next) => (action) => {
     log.info(`Action ${JSON.stringify(action)}`)
-    const stateBeforeRequest = getState()
-    const result = next(action)
-    const stateAfterRequest = getState()
-    Object.keys(stateBeforeRequest.contexts).forEach((key) => {
 
-      const stateChanged = !shallowEqual(stateBeforeRequest.contexts[key].shared, stateAfterRequest.contexts[key].shared)
+    const stateBefore = getState()
+    const result = next(action)
+    const stateAfter = getState()
+
+    Object.keys(stateAfter.contexts).forEach((key) => {
+
+      const clientStateBefore = clientSelector(stateBefore, key)
+      const clientStateAfter = clientSelector(stateAfter, key)
+
+      const stateChanged = !shallowEqual(clientStateBefore, clientStateAfter)
       const targetSocket = clientGuidToSocket[key]
-      if(stateChanged && targetSocket){
-        log.info(`After ${action.type} state for ${key} changed, sending action`)
+      if (stateChanged && targetSocket) {
+        log.info(`Sending to ${key}`)
         targetSocket.emit('action', action)
-      } else {
-        log.info(`After ${action.type} state for ${key} is same`)
       }
-      if(!targetSocket){
+
+      if (!targetSocket) {
         log.warn(`Client ${key} disconnected and is not receiving state changes`)
       }
     })

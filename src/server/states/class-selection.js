@@ -1,5 +1,4 @@
-import {messageAction, setClassAction} from '../../model/context-reducer'
-import {setStateAction} from '../../model/action-state-reducer'
+import {messageAction} from '../../model/states/chat'
 
 const classes = ['mage', 'warrior', 'priest', 'hunter', 'stone']
 const gateKeeper = 'Gate Keeper'
@@ -18,8 +17,8 @@ export default {
   onCommand:(guid, getState, dispatch, command)=>{
     if(classes.includes(command)){
       //dispatch(message(gateKeeper, guid, 'Yes... yes... we allow those guys in, come in...'))
-      dispatch(setClassAction(guid, command))
-      dispatch(setStateAction(guid, 'townLobby'))
+      //dispatch(setClassAction(guid, command))
+      //dispatch(setStateAction(guid, 'townLobby'))
     } else {
       //dispatch(message(gateKeeper, guid, `No, we don\'t allow any ${command} in this town. You must be thinking about something else.`))
       dispatch(messageAction(gateKeeper, guid, `Unknown class ${command}.`))
