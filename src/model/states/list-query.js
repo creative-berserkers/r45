@@ -47,7 +47,7 @@ export function optionsSelector(state){
  * @param {Array} options
  * @returns ListQuery
  */
-export function createListQuery({id, query, options}) {
+export function createListQuery({id = 'none', query = 'none', options = []}) {
   return {
     name: LIST_QUERY,
     id,
@@ -56,7 +56,7 @@ export function createListQuery({id, query, options}) {
   }
 }
 
-const initialState = createListQuery('none', 'none',[])
+const initialState = createListQuery({id:'',query:'', options:[]})
 
 /**
  * @typedef {{name:string, id:string, query:string, options:Array}} ListQueryState

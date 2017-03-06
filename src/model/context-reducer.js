@@ -1,4 +1,4 @@
-import * as clientStateReducers from './states'
+import * as allClientStateReducers from './states'
 
 export const PLAYER_NAME_SET = 'PLAYER_NAME_SET'
 export const CLASS_ID_SET = 'CLASS_ID_SET'
@@ -100,7 +100,7 @@ export function getClassId(state) {
  * @returns {Array}
  */
 export function getStack(state) {
-  return state.stack
+  return state ? state.stack : undefined
 }
 
 /**
@@ -143,7 +143,7 @@ const initialState = {
   stack : []
 }
 
-export default function contextReducer(state = initialState, action){
+export default function contextReducer(state = initialState, action, clientStateReducers = allClientStateReducers){
   switch (action.type){
     case PLAYER_NAME_SET :
       return {
@@ -170,7 +170,17 @@ export default function contextReducer(state = initialState, action){
         ...state,
         stack: state.stack.slice(0, state.length - 1)
       }
-    case STACK_ACTION : return state.stack.slice(0,state.stack.length-1).concat(clientStateReducers[action.name](state.stack[state.stack.length -1], action.action))
+    case STACK_ACTION : {
+        const topAction = state.stack[state.stack.length-1]
+        if(topAction){
+          return {
+              ...state,
+              stack: state.stack.slice(0, state.stack.length - 1).concat(clientStateReducers[topAction.name](topAction, action.action))
+          }
+        }
+        return state
+      return
+    }
     default : return state
   }
 }

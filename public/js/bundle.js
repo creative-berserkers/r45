@@ -1,60 +1,158 @@
-(function (React$1,reactRedux,redux,ReactDOM) {
+(function (React,reactRedux,redux,ReactDOM) {
 'use strict';
 
-function s4() {
-  return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-}
+//import introduction from './introduction'
+//import classSelection from './class-selection'
+//import townLobby from './town-lobby'
+//import rollDices from './roll-dices'
+//import assignDices from './assign-dices'
+//import battle from './battle'
+//import chat from './chat'
 
-function guid() {
+const INPUT_QUERY = 'inputQuery';
 
-  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
-}
 
-const STATE_NAME = 'chat';
-
-const MESSAGE = 'CHAT:MESSAGE';
-const SET_PLAYER_NAME = 'CHAT:PLAYER_NAME_SET';
 
 /**
- *
- * @param {string} to
+ * @typedef {{type: string, message: string}} ResponseAction
+ */
+
+/**
  * @param {string} message
- * @param {string} from
- * @returns {{type: string, id:string, from: string, guid: string|undefined, to: string, message: string}}
+ * @returns ResponseAction
  */
 
 
-function setPlayerNameAction(playerName, guid$$1) {
+/**
+ * @param {{id:string}} state
+ * @returns string
+ */
+
+
+/**
+ * @param {{query:string}} state
+ * @returns string
+ */
+
+
+/**
+ * @typedef {{name: string, id: string, query: string}} InputQuery
+ */
+
+/**
+ * @param {string} id
+ * @param {string} query
+ * @returns InputQuery
+ */
+function createInputQuery({ id = '', query = '' }) {
   return {
-    type: SET_PLAYER_NAME,
-    guid: guid$$1,
-    playerName: playerName
+    name: INPUT_QUERY,
+    id,
+    query
   };
 }
 
+const initialState$1 = createInputQuery({ id: '', query: '' });
+
+/**
+ * @typedef {{name:string, id:string, query:string}} InputQueryState
+ */
+
+/**
+ * @param {InputQueryState} state
+ * @param {*} action
+ * @returns {* | InputQueryState}
+ */
+function introduction(state = initialState$1, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}
+
+const LIST_QUERY = 'listQuery';
 
 
-const initialState = {
-  name: STATE_NAME,
-  playerName: 'Noname',
-  messages: []
+
+/**
+ * @param {number} option
+ * @returns {{type: string, option: number}}
+ */
+
+
+/**
+ * @param {{id:string}} state
+ * @returns string
+ */
+
+
+/**
+ * @param {{query:string}} state
+ * @return string
+ */
+
+
+/**
+ * @param {{options:Array}} state
+ * returns Array
+ */
+
+
+/**
+ * @typedef {{name: string, id: string, query: string, options: Array}} ListQuery
+ */
+
+/**
+ * @param {string} id
+ * @param {string} query
+ * @param {Array} options
+ * @returns ListQuery
+ */
+function createListQuery({ id = 'none', query = 'none', options = [] }) {
+  return {
+    name: LIST_QUERY,
+    id,
+    query,
+    options
+  };
+}
+
+const initialState$2 = createListQuery({ id: '', query: '', options: [] });
+
+/**
+ * @typedef {{name:string, id:string, query:string, options:Array}} ListQueryState
+ */
+
+/**
+ * @param {ListQueryState} state
+ * @param {*} action
+ * @returns {* | ListQueryState}
+ */
+function introduction$1(state = initialState$2, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}
+
+const SETUP = 'setup';
+
+const initialState$3 = {
+  name: SETUP
 };
 
-function introduction(state = initialState, action) {
+/**
+ * @typedef {{
+ *          name:string}} SetupState
+ */
+
+/**
+ * @param {undefined | SetupState} state
+ * @param { Action | PlayerNameAction | PlayerClassIdAction | PlayerRaceIdAction } action
+ * @returns {* | SetupState}
+ */
+function introduction$2(state = initialState$3, action) {
   switch (action.type) {
-    case MESSAGE:
-      return Object.assign({}, state, {
-        messages: state.messages.concat({
-          id: action.id,
-          from: action.from,
-          to: action.to,
-          message: action.message
-        })
-      });
-    case SET_PLAYER_NAME:
-      return Object.assign({}, state, {
-        playerName: action.playerName
-      });
     default:
       return state;
   }
@@ -68,220 +166,191 @@ function introduction(state = initialState, action) {
 //import battle from './battle'
 
 
-var clientStateReducers = Object.freeze({
-	chat: introduction
+var allClientStateReducers = Object.freeze({
+	inputQuery: introduction,
+	listQuery: introduction$1,
+	setup: introduction$2
 });
 
-const CLIENT_STATE_LOAD = 'CLIENT_STATE_LOAD';
-const CLIENT_STATE_PUSH = 'CLIENT_STATE_PUSH';
-const CLIENT_STATE_POP = 'CLIENT_STATE_POP';
+const PLAYER_NAME_SET = 'PLAYER_NAME_SET';
+const CLASS_ID_SET = 'CLASS_ID_SET';
+const RACE_ID_SET = 'RACE_ID_SET';
+const STACK_PUSH = 'STACK_PUSH';
+const STACK_POP = 'STACK_POP';
+const STACK_ACTION = 'STACK_ACTION';
+
+/**
+ * @typedef {{type: string, playerName: string}} PlayerNameAction
+ */
+
+/**
+ * @param {string} playerName
+ * @returns PlayerNameAction
+ */
+
+
+/**
+ * @typedef {{type: string, classId: string}} PlayerClassIdAction
+ */
+
+/**
+ * @param {string} classId
+ * @returns PlayerClassIdAction
+ */
+
+
+/**
+ * @typedef {{type: string, raceId: string}} PlayerRaceIdAction
+ */
+
+/**
+ * @param {string} raceId
+ * @returns PlayerRaceIdAction
+ */
+
+
+/**
+ * @param action wrapped action
+ * @returns {{type: string, action: Object}}
+ */
+
+
+/**
+ * @typedef {{type: string, name: string, initialState: *}} PushClientStateAction
+ */
+
+/**
+ * @param {string} name
+ * @param {*} initialState
+ * @returns {{type: string, name: string, initialState: *}}
+ */
 
 
 
 
+/**
+ * @param {{classId:string}} state
+ * @returns {string}
+ */
 
-function loadClientStateAction(state, guid) {
-  return {
-    type: CLIENT_STATE_LOAD,
-    guid: guid,
-    state: state
-  };
+
+/**
+ * @param {{stack:Array}} state
+ * @returns {Array}
+ */
+function getStack(state) {
+  return state ? state.stack : undefined;
 }
 
-function currentClientStateSelector(state) {
-  return state[state.length - 1];
-}
+/**
+ * @param {{playerName:string}} state
+ * @returns {string}
+ */
 
 
+/**
+ * @param {{stack:Array}} state
+ * @returns {Object}
+ */
 
-function clientStateSelector(state, name) {
-  return state.find(s => s.name === name);
-}
 
-function contextReducer(state = [], action) {
+/**
+ * @param {{stack:Array.<{name}>}} state
+ */
+
+
+/**
+ * @param {{stack:Array.<{name}>}} state
+ * @param {string} name
+ * @returns {Object}
+ */
+
+
+const initialState = {
+  playerName: 'Noname',
+  classId: 'mage',
+  raceId: 'none',
+  actions: [],
+  stack: []
+};
+
+function contextReducer(state = initialState, action, clientStateReducers = allClientStateReducers) {
   switch (action.type) {
-    case CLIENT_STATE_LOAD:
-      return action.state;
-    case CLIENT_STATE_PUSH:
-      return state.concat(clientStateReducers[action.name](undefined, action));
-    case CLIENT_STATE_POP:
-      return state.slice(0, state.length - 1);
-    default:
+    case PLAYER_NAME_SET:
+      return Object.assign({}, state, {
+        playerName: action.playerName
+      });
+    case CLASS_ID_SET:
+      return Object.assign({}, state, {
+        classId: action.classId
+      });
+    case RACE_ID_SET:
+      return Object.assign({}, state, {
+        raceId: action.raceId
+      });
+    case STACK_PUSH:
+      return Object.assign({}, state, {
+        stack: [...state.stack, clientStateReducers[action.name](action.initialState, { type: '@INIT@' })]
+      });
+    case STACK_POP:
+      return Object.assign({}, state, {
+        stack: state.stack.slice(0, state.length - 1)
+      });
+    case STACK_ACTION:
       {
-        if (state.length === 0) return state;
-        const newState = state.map(s => clientStateReducers[s.name](s, action));
-        return newState.find((s, index) => state[index] !== s) === undefined ? state : newState;
+        const topAction = state.stack[state.stack.length - 1];
+        if (topAction) {
+          return Object.assign({}, state, {
+            stack: state.stack.slice(0, state.stack.length - 1).concat(clientStateReducers[topAction.name](topAction, action.action))
+          });
+        }
+        return state;
+        return;
       }
+    default:
+      return state;
   }
 }
 
-var css = {
-    "defaultState": "mcbcd0e2a3_defaultState",
-    "introductionState": "mcbcd0e2a3_introductionState",
-    "classSelectionState": "mcbcd0e2a3_classSelectionState",
-    "townLobbyState": "mcbcd0e2a3_townLobbyState",
-    "rollDicesState": "mcbcd0e2a3_rollDicesState",
-    "assignDicesState": "mcbcd0e2a3_assignDicesState",
-    "battleState": "mcbcd0e2a3_battleState",
-    "chat": "mcbcd0e2a3_chat",
-    "map": "mcbcd0e2a3_map",
-    "dicepool": "mcbcd0e2a3_dicepool",
-    "actionpool": "mcbcd0e2a3_actionpool",
-    "battlefield": "mcbcd0e2a3_battlefield",
-    "rerollButton": "mcbcd0e2a3_rerollButton",
-    "midButton": "mcbcd0e2a3_midButton",
-    "diceSpace": "mcbcd0e2a3_diceSpace"
-};
+const CONTEXT_SPAWNED = 'CONTEXT_SPAWNED';
+const CONTEXT_DESPAWNED = 'CONTEXT_DESPAWNED';
+const CONTEXT_ACTION = 'CONTEXT_ACTION';
 
-var css$1 = {
-    "actionComponent": "mc48c3b198_actionComponent",
-    "diceSlot": "mc48c3b198_diceSlot",
-    "dice": "mc48c3b198_dice",
-    "diceLocked": "mc48c3b198_diceLocked",
-    "diceSpace": "mc48c3b198_diceSpace",
-    "messageLogContainer": "mc48c3b198_messageLogContainer",
-    "messageLogContainerList": "mc48c3b198_messageLogContainerList",
-    "messageLogContainerInput": "mc48c3b198_messageLogContainerInput",
-    "messageLogContainerSend": "mc48c3b198_messageLogContainerSend",
-    "messageAuthorName": "mc48c3b198_messageAuthorName",
-    "messageScrollContainer": "mc48c3b198_messageScrollContainer"
-};
 
-let MessageLog = class MessageLog extends React$1.Component {
 
-  constructor() {
-    super();
-  }
+/**
+ * @param {string} guid
+ * @returns {{type: string, guid: string|undefined}}
+ */
 
-  componentDidUpdate() {
-    this.refs.messages.scrollTop = this.refs.messages.scrollHeight;
-    this.refs.chatInput.focus();
-  }
 
-  render() {
 
-    let handleClick = () => {
-      this.props.onSend(this.refs.chatInput.value);
-      this.refs.chatInput.value = '';
-    };
 
-    let handleKeyboard = e => {
-      if (e.key === 'Enter') {
-        handleClick();
-      }
-    };
-
-    return React$1.createElement(
-      'div',
-      { className: `${ this.props.className } ${ css$1.messageLogContainer }` },
-      React$1.createElement(
-        'div',
-        { key: 'list', ref: 'messages', className: css$1.messageLogContainerList },
-        this.props.children
-      ),
-      React$1.createElement('input', { key: 'input', className: css$1.messageLogContainerInput, ref: 'chatInput', onKeyUp: handleKeyboard }),
-      React$1.createElement(
-        'button',
-        { key: 'send', className: css$1.messageLogContainerSend, onClick: handleClick },
-        'Send'
-      )
-    );
-  }
-};
-
-function Message({ id, from, message }) {
-  return React$1.createElement(
-    'div',
-    { key: id },
-    React$1.createElement(
-      'span',
-      { className: css$1.messageAuthorName },
-      from
-    ),
-    ':',
-    message
-  );
+function getContext(state, guid) {
+  return state.contexts[guid];
 }
 
-let IntroductionComponent = class IntroductionComponent extends React$1.Component {
-  constructor() {
-    super();
+function allContextsReducer(state = {}, action) {
+  switch (action.type) {
+    case CONTEXT_SPAWNED:
+      return Object.assign({}, state, { [action.guid]: contextReducer(state[action.guid], action) });
+    case CONTEXT_DESPAWNED:
+      return Object.assign({}, state, { [action.guid]: contextReducer(state[action.guid], action) });
+    case CONTEXT_ACTION:
+      return Object.assign({}, state, { [action.guid]: contextReducer(state[action.guid], action.action) });
+    default:
+      return state;
   }
+}
 
-  render() {
-    const { messages, onSend } = this.props;
+function s4() {
+  return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+}
 
-    return React$1.createElement(
-      'div',
-      { className: `${ css.defaultState } ${ css.introductionState }` },
-      React$1.createElement(
-        MessageLog,
-        { onSend: onSend, className: css.chat },
-        messages.map(({ id, from, message }) => React$1.createElement(Message, { key: id, from: from, message: message }))
-      )
-    );
-  }
-};
+function guid() {
 
-
-const mapStateToDispatch = dispatch => {
-  return {
-    onSend: command => {
-      dispatch(setPlayerNameAction(command));
-    }
-  };
-};
-
-const mapStateToProps$1 = state => {
-  return {
-    messages: clientStateSelector(state, STATE_NAME).messages
-  };
-};
-
-var chat$$1 = reactRedux.connect(mapStateToProps$1, mapStateToDispatch)(IntroductionComponent);
-
-//import introduction from './introduction'
-//import classSelection from './class-selection'
-//import townLobby from './town-lobby'
-//import rollDices from './roll-dices'
-//import assignDices from './assign-dices'
-//import battle from './battle'
-
-
-var clientStates = Object.freeze({
-	chat: chat$$1
-});
-
-let AppContainer = class AppContainer extends React$1.Component {
-  constructor() {
-    super();
-  }
-
-  render() {
-    const { clientState } = this.props;
-    if (!clientState) return React$1.createElement(
-      'div',
-      null,
-      'Loading...'
-    );
-
-    const StateContainer = clientStates[clientState.name];
-    return React$1.createElement(StateContainer, null);
-  }
-};
-
-
-const mapDispatchToProps = function (dispatch) {
-  return {};
-};
-
-const mapStateToProps = function (state) {
-  return {
-    clientState: currentClientStateSelector(state)
-  };
-};
-
-var AppContainer$1 = reactRedux.connect(mapStateToProps, mapDispatchToProps)(AppContainer);
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
 
 var log = {
   debug(...args) {
@@ -298,23 +367,196 @@ var log = {
   }
 };
 
-function command({ getState, dispatch }) {
-  const socket = io();
+const initialState$4 = {
+  'action_shield': {
+    slots: [{
+      require: 1
+    }]
+  },
+  'action_maneuver': {
+    slots: [{
+      require: 3
+    }]
+  },
+  'action_throw': {
+    slots: [{
+      require: 6
+    }]
+  },
+  'action_fireball': {
+    slots: [{
+      require: 5
+    }, {
+      require: 6
+    }]
+  }
+};
 
+/**
+ * @typedef {{require:number}} Slot
+ * @typedef {{slots:Array.<Slot>}} Action
+ * @typedef {Object.<string, Action>} AllActionState
+ */
+
+/**
+ * @param {AllActionState} state
+ * @param {*} action
+ * @returns {AllActionState}
+ */
+var allActionsReducer = function (state = initialState$4, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+};
+
+const initialState$5 = {
+  'class_mage': {
+    actions: ['action_shield', 'action_maneuver', 'action_throw', 'action_fireball']
+  },
+  'class_druid': {
+    actions: ['action_shield', 'action_maneuver', 'action_throw', 'action_fireball']
+  }
+};
+
+/**
+ * @typedef {{actions:Array.<string>}} Class
+ * @typedef {Object.<string,Class>} AllClassesState
+ */
+
+/**
+ * @param {AllClassesState} state
+ * @param {*} action
+ * @returns {AllClassesState}
+ */
+var allClassesReducer = function (state = initialState$5, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+};
+
+const initialState$6 = {
+  'race_human': {
+    maxHp: 10
+  },
+  'race_elf': {
+    maxHp: 10
+  }
+};
+
+/**
+ * @typedef {{maxHp:number}} Race
+ * @typedef {Object.<string,Race>} AllRacesState
+ */
+
+/**
+ * @param {AllRacesState} state
+ * @param {*} action
+ * @returns {AllRacesState}
+ */
+var allRacesReducer = function (state = initialState$6, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+};
+
+const MESSAGE = 'MESSAGE';
+
+/**
+ * @typedef {{type: string, id:string, from: string, message: string}} MessageAction
+ */
+
+/**
+ * @param {string} id
+ * @param {string} from
+ * @param {string} message
+ * @returns {MessageAction}
+ */
+
+
+const initialState$7 = [];
+
+/**
+ * @typedef {{id:string, from: string, message: string}} Message
+ * @typedef {Array.<Message>} MessagesState
+ */
+
+/**
+ * @param {undefined | MessagesState} state
+ * @param {MessageAction} action
+ * @returns {* | MessagesState}
+ */
+function messagesReducer(state = initialState$7, action) {
+  switch (action.type) {
+    case MESSAGE:
+      return state.concat({
+        id: action.id,
+        from: action.from,
+        message: action.message
+      });
+    default:
+      return state;
+  }
+}
+
+const LOAD_STATE = 'LOAD_STATE';
+
+/**
+ * @param {{classes:Array}} state
+ * @returns {Array}
+ */
+
+
+/**
+ * @param {{races:Array}} state
+ * @returns {Array}
+ */
+
+
+function loadStateAction(state) {
+  return {
+    type: LOAD_STATE,
+    state: state
+  };
+}
+
+function rootReducer(state = {}, action) {
+  switch (action) {
+    case LOAD_STATE:
+      return action.state;
+    default:
+      return {
+        messages: messagesReducer(state.messages, action),
+        actions: allActionsReducer(state.actions, action),
+        classes: allClassesReducer(state.classes, action),
+        races: allRacesReducer(state.races, action),
+        contexts: allContextsReducer(state.contexts, action)
+      };
+  }
+}
+
+function getClientGuid() {
   let authToken = localStorage.getItem('auth-token');
   if (!authToken) {
     authToken = guid();
     localStorage.setItem('auth-token', authToken);
   }
+  return authToken;
+}
+
+function command({ dispatch }) {
+  const socket = io();
 
   socket.on('connect', function onConnect() {
     log.info('connected');
-    socket.emit('authentication', authToken);
+    socket.emit('authentication', getClientGuid());
   });
 
   socket.on('initial_state', function onInitialState(state) {
     log.info('initial_state', state);
-    dispatch(loadClientStateAction(state));
+    dispatch(loadStateAction(state));
   });
 
   socket.on('action', function onAction(action) {
@@ -324,19 +566,45 @@ function command({ getState, dispatch }) {
   return next => action => {
     const actionJSON = JSON.stringify(action);
     log.info(`Action: ${ actionJSON }`);
-    if (action.type === 'COMMAND_REQUEST') {
-      socket.emit('command_request', action);
-      return {};
-    } else {
-      return next(action);
-    }
+    socket.emit('command_request', action);
+    return {};
   };
 }
+
+const stackViewMapping = {
+  'setup:inputQuery': () => {
+    return React.createElement(
+      'h1',
+      null,
+      'Hello world from setup:inputQuery'
+    );
+  }
+};
+
+function AppContainer({ clientStateName }) {
+  return clientStateName ? stackViewMapping[clientStateName]() : React.createElement(
+    'div',
+    null,
+    'Loading...'
+  );
+}
+
+const mapDispatchToProps = function (dispatch) {
+  return {};
+};
+
+const mapStateToProps = function (state) {
+  return {
+    clientStateName: getStack(getContext(state, getClientGuid())).map(state => state.name).join(':')
+  };
+};
+
+var AppContainer$1 = reactRedux.connect(mapStateToProps, mapDispatchToProps)(AppContainer);
 
 /*global __REDUX_DEVTOOLS_EXTENSION_COMPOSE__ */
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || redux.compose;
-const store = redux.createStore(contextReducer, composeEnhancers(redux.applyMiddleware(command)));
+const store = redux.createStore(rootReducer, composeEnhancers(redux.applyMiddleware(command)));
 
 ReactDOM.render(React.createElement(
   reactRedux.Provider,

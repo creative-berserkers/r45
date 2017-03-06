@@ -1,11 +1,11 @@
 import fs from 'fs'
 import path from 'path'
-import globalReducer, {clientSpawnedAction, clientDespawnedAction, actionRequest} from 'model/server-reducer'
 import serverMiddleware from './middleware/server-middleware'
 import responseMiddleware from './middleware/response-middleware'
 import log from './log'
 import {createStore, applyMiddleware} from 'redux'
-import {clientAction} from '../model/server-reducer'
+import {contextDespawnedAction, contextSpawnedAction, contextAction} from "../model/all-contexts-reducer";
+import rootReducer from 'model'
 
 const dataDirPath = path.join(__dirname, 'data')
 const stateFilePath = path.join(__dirname, 'data/state.json')
@@ -24,7 +24,7 @@ try {
 }
 
 if(stateStr.trim().length === 0) stateStr = '{}'
-const store = createStore(globalReducer, JSON.parse(stateStr), applyMiddleware(serverMiddleware,responseMiddleware.bind(undefined,clientGuidToSocket)))
+const store = createStore(rootReducer, JSON.parse(stateStr), applyMiddleware(serverMiddleware,responseMiddleware.bind(undefined,clientGuidToSocket)))
 
 store.subscribe(function persistState(){
   const currentState = store.getState()
@@ -44,14 +44,14 @@ export default function onSocket(io, socket){
     clientSocketIdToGuid[socket.id] = authToken
     clientGuidToSocket[authToken] = socket
     log.info(`client ??@${clientId} authenticated as ${authToken}`)
-    store.dispatch(clientSpawnedAction(authToken))
-    socket.emit('initial_state', store.getState().contexts[authToken].shared)
+    store.dispatch(contextSpawnedAction(authToken))
+    socket.emit('initial_state', store.getState())
   })
 
   socket.on('disconnect', function() {
     const guid = clientSocketIdToGuid[socket.id]
     log.info(`client ${guid}@${clientId} disconnected`)
-    store.dispatch(clientDespawnedAction(guid))
+    store.dispatch(contextDespawnedAction(guid))
     clientGuidToSocket[guid] = undefined
     clientSocketIdToGuid[socket.id] = undefined
   })
@@ -59,6 +59,6 @@ export default function onSocket(io, socket){
   socket.on('command_request', function(action){
     const guid = clientSocketIdToGuid[socket.id]
     log.info(`client ${guid}@${clientId} action: ${JSON.stringify(action)}`)
-    store.dispatch(clientAction(guid,action))
+    store.dispatch(contextAction(guid,action))
   })
 }

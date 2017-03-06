@@ -68,13 +68,24 @@ describe('context-reducer', () => {
     })
 
     it('should modify stack state', () => {
-      const oldState = {stack: [{id: 'someId'}]}
+      const oldState = {stack: [{name: 'someName', id: 'someId'}]}
+      const stateAction = {type: 'SOME_TYPE', id: 'someId'};
 
-      const newState = contextReducer(oldState, stackAction({type: 'SOME_TYPE', id: 'someId'}))
+      let stackStateReducerCalled = 0
+
+      const newState = contextReducer(oldState, stackAction(stateAction), {
+        'someName': (state, action) => {
+          stackStateReducerCalled++
+          expect(action).to.deep.equal(stateAction)
+          expect(state).to.deep.equal(oldState.stack[0])
+          return {name: 'someName',id: 'someId', newProp:'someNewProp'}
+        }
+      })
 
       expect(newState).to.deep.equal({
-        stack: []
+        stack: [{name: 'someName',id: 'someId', newProp:'someNewProp'}]
       })
+      expect(stackStateReducerCalled).to.equal(1)
     })
   })
 
@@ -110,7 +121,7 @@ describe('context-reducer', () => {
 
   describe('getLastStackState', () => {
     it('should return last stack state', () => {
-      const state = {stack: [{someState: 'someState'},{someOtherState: 'someOtherState'}]}
+      const state = {stack: [{someState: 'someState'}, {someOtherState: 'someOtherState'}]}
 
       const stack = getLastStackState(state)
 
@@ -120,7 +131,7 @@ describe('context-reducer', () => {
 
   describe('getLastStackStateName', () => {
     it('should return last stack state name', () => {
-      const state = {stack: [{name: 'someState'},{name: 'someOtherState'}]}
+      const state = {stack: [{name: 'someState'}, {name: 'someOtherState'}]}
 
       const lastStackStateName = getLastStackStateName(state)
 
@@ -130,7 +141,7 @@ describe('context-reducer', () => {
 
   describe('getStackStateWithName', () => {
     it('should return stack state with name', () => {
-      const state = {stack: [{name: 'someState'},{name: 'someOtherState'}]}
+      const state = {stack: [{name: 'someState'}, {name: 'someOtherState'}]}
 
       const stackStateWithName = getStackStateWithName(state, 'someState')
 
@@ -138,7 +149,7 @@ describe('context-reducer', () => {
     })
 
     it('should return undefined', () => {
-      const state = {stack: [{name: 'someState'},{name: 'someOtherState'}]}
+      const state = {stack: [{name: 'someState'}, {name: 'someOtherState'}]}
 
       const stackStateWithName = getStackStateWithName(state, 'nonExistingName')
 

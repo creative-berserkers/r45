@@ -7,7 +7,7 @@ import setupReducer, {
 } from './setup'
 
 describe('setupReducer', () => {
-  it('should create initial state', () => {
+  /*it('should create initial state', () => {
     const state = setupReducer(undefined, {type: '@INIT@'})
     expect(state).to.deep.equal({
       actions: [],
@@ -16,5 +16,5 @@ describe('setupReducer', () => {
       name: 'setup',
       playerName: 'Noname'
     })
-  })
+  })*/
 })

@@ -29,13 +29,667 @@ var log = {
   }
 };
 
-function s4() {
-  return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+const INPUT_QUERY = 'inputQuery';
+
+const QUERY_RESPONSE = 'INPUT_QUERY:QUERY_RESPONSE';
+
+/**
+ * @typedef {{type: string, message: string}} ResponseAction
+ */
+
+/**
+ * @param {string} message
+ * @returns ResponseAction
+ */
+
+
+/**
+ * @param {{id:string}} state
+ * @returns string
+ */
+
+
+/**
+ * @param {{query:string}} state
+ * @returns string
+ */
+
+
+/**
+ * @typedef {{name: string, id: string, query: string}} InputQuery
+ */
+
+/**
+ * @param {string} id
+ * @param {string} query
+ * @returns InputQuery
+ */
+function createInputQuery({ id = '', query = '' }) {
+  return {
+    name: INPUT_QUERY,
+    id,
+    query
+  };
 }
 
-function guid() {
+const initialState$1 = createInputQuery({ id: '', query: '' });
 
-  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+/**
+ * @typedef {{name:string, id:string, query:string}} InputQueryState
+ */
+
+/**
+ * @param {InputQueryState} state
+ * @param {*} action
+ * @returns {* | InputQueryState}
+ */
+function introduction(state = initialState$1, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}
+
+const LIST_QUERY = 'listQuery';
+
+const LIST_QUERY_RESPONSE = 'LIST_QUERY:LIST_QUERY_RESPONSE';
+
+/**
+ * @param {number} option
+ * @returns {{type: string, option: number}}
+ */
+
+
+/**
+ * @param {{id:string}} state
+ * @returns string
+ */
+
+
+/**
+ * @param {{query:string}} state
+ * @return string
+ */
+
+
+/**
+ * @param {{options:Array}} state
+ * returns Array
+ */
+function optionsSelector(state) {
+  return state.options;
+}
+
+/**
+ * @typedef {{name: string, id: string, query: string, options: Array}} ListQuery
+ */
+
+/**
+ * @param {string} id
+ * @param {string} query
+ * @param {Array} options
+ * @returns ListQuery
+ */
+function createListQuery({ id = 'none', query = 'none', options = [] }) {
+  return {
+    name: LIST_QUERY,
+    id,
+    query,
+    options
+  };
+}
+
+const initialState$2 = createListQuery({ id: '', query: '', options: [] });
+
+/**
+ * @typedef {{name:string, id:string, query:string, options:Array}} ListQueryState
+ */
+
+/**
+ * @param {ListQueryState} state
+ * @param {*} action
+ * @returns {* | ListQueryState}
+ */
+function introduction$1(state = initialState$2, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}
+
+const SETUP = 'setup';
+
+const initialState$3 = {
+  name: SETUP
+};
+
+/**
+ * @typedef {{
+ *          name:string}} SetupState
+ */
+
+/**
+ * @param {undefined | SetupState} state
+ * @param { Action | PlayerNameAction | PlayerClassIdAction | PlayerRaceIdAction } action
+ * @returns {* | SetupState}
+ */
+function introduction$2(state = initialState$3, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+}
+
+//import rollDices from './roll-dices'
+//import introduction from './introduction'
+//import classSelection from './class-selection'
+//import townLobby from './town-lobby'
+//import assignDices from './assign-dices'
+//import battle from './battle'
+
+
+var allClientStateReducers = Object.freeze({
+	inputQuery: introduction,
+	listQuery: introduction$1,
+	setup: introduction$2
+});
+
+const PLAYER_NAME_SET = 'PLAYER_NAME_SET';
+const CLASS_ID_SET = 'CLASS_ID_SET';
+const RACE_ID_SET = 'RACE_ID_SET';
+const STACK_PUSH = 'STACK_PUSH';
+const STACK_POP = 'STACK_POP';
+const STACK_ACTION = 'STACK_ACTION';
+
+/**
+ * @typedef {{type: string, playerName: string}} PlayerNameAction
+ */
+
+/**
+ * @param {string} playerName
+ * @returns PlayerNameAction
+ */
+function setPlayerNameAction(playerName) {
+  return {
+    type: PLAYER_NAME_SET,
+    playerName: playerName
+  };
+}
+
+/**
+ * @typedef {{type: string, classId: string}} PlayerClassIdAction
+ */
+
+/**
+ * @param {string} classId
+ * @returns PlayerClassIdAction
+ */
+function setPlayerClassIdAction(classId) {
+  return {
+    type: CLASS_ID_SET,
+    classId: classId
+  };
+}
+
+/**
+ * @typedef {{type: string, raceId: string}} PlayerRaceIdAction
+ */
+
+/**
+ * @param {string} raceId
+ * @returns PlayerRaceIdAction
+ */
+function setPlayerRaceIdAction(raceId) {
+  return {
+    type: RACE_ID_SET,
+    raceId: raceId
+  };
+}
+
+/**
+ * @param action wrapped action
+ * @returns {{type: string, action: Object}}
+ */
+
+
+/**
+ * @typedef {{type: string, name: string, initialState: *}} PushClientStateAction
+ */
+
+/**
+ * @param {string} name
+ * @param {*} initialState
+ * @returns {{type: string, name: string, initialState: *}}
+ */
+function pushClientStateAction(name, initialState) {
+  return {
+    type: STACK_PUSH,
+    name: name,
+    initialState: initialState
+  };
+}
+
+function popClientStateAction(returnState) {
+  return {
+    type: STACK_POP,
+    returnState: returnState
+  };
+}
+
+/**
+ * @param {{classId:string}} state
+ * @returns {string}
+ */
+
+
+/**
+ * @param {{stack:Array}} state
+ * @returns {Array}
+ */
+
+
+/**
+ * @param {{playerName:string}} state
+ * @returns {string}
+ */
+
+
+/**
+ * @param {{stack:Array}} state
+ * @returns {Object}
+ */
+function getLastStackState(state) {
+  return state.stack[state.stack.length - 1];
+}
+
+/**
+ * @param {{stack:Array.<{name}>}} state
+ */
+function getLastStackStateName(state) {
+  return getLastStackState(state).name;
+}
+
+/**
+ * @param {{stack:Array.<{name}>}} state
+ * @param {string} name
+ * @returns {Object}
+ */
+
+
+const initialState = {
+  playerName: 'Noname',
+  classId: 'mage',
+  raceId: 'none',
+  actions: [],
+  stack: []
+};
+
+function contextReducer(state = initialState, action, clientStateReducers = allClientStateReducers) {
+  switch (action.type) {
+    case PLAYER_NAME_SET:
+      return Object.assign({}, state, {
+        playerName: action.playerName
+      });
+    case CLASS_ID_SET:
+      return Object.assign({}, state, {
+        classId: action.classId
+      });
+    case RACE_ID_SET:
+      return Object.assign({}, state, {
+        raceId: action.raceId
+      });
+    case STACK_PUSH:
+      return Object.assign({}, state, {
+        stack: [...state.stack, clientStateReducers[action.name](action.initialState, { type: '@INIT@' })]
+      });
+    case STACK_POP:
+      return Object.assign({}, state, {
+        stack: state.stack.slice(0, state.length - 1)
+      });
+    case STACK_ACTION:
+      {
+        const topAction = state.stack[state.stack.length - 1];
+        if (topAction) {
+          return Object.assign({}, state, {
+            stack: state.stack.slice(0, state.stack.length - 1).concat(clientStateReducers[topAction.name](topAction, action.action))
+          });
+        }
+        return state;
+        return;
+      }
+    default:
+      return state;
+  }
+}
+
+const CONTEXT_SPAWNED = 'CONTEXT_SPAWNED';
+const CONTEXT_DESPAWNED = 'CONTEXT_DESPAWNED';
+const CONTEXT_ACTION = 'CONTEXT_ACTION';
+
+function contextAction(guid, action) {
+  return {
+    type: CONTEXT_ACTION,
+    guid: guid,
+    action: action
+  };
+}
+
+/**
+ * @param {string} guid
+ * @returns {{type: string, guid: string|undefined}}
+ */
+function contextSpawnedAction(guid) {
+  return {
+    type: CONTEXT_SPAWNED,
+    guid: guid
+  };
+}
+
+function contextDespawnedAction(guid) {
+  return {
+    type: CONTEXT_DESPAWNED,
+    guid: guid
+  };
+}
+
+function getContext(state, guid) {
+  return state.contexts[guid];
+}
+
+function allContextsReducer(state = {}, action) {
+  switch (action.type) {
+    case CONTEXT_SPAWNED:
+      return Object.assign({}, state, { [action.guid]: contextReducer(state[action.guid], action) });
+    case CONTEXT_DESPAWNED:
+      return Object.assign({}, state, { [action.guid]: contextReducer(state[action.guid], action) });
+    case CONTEXT_ACTION:
+      return Object.assign({}, state, { [action.guid]: contextReducer(state[action.guid], action.action) });
+    default:
+      return state;
+  }
+}
+
+var inputQuery = {
+  onEnter: (getState, dispatch, next, { guid }) => {},
+  onAction: (getState, dispatch, next, { action, guid }) => {
+    switch (action.type) {
+      case QUERY_RESPONSE:
+        {
+          next(contextAction(guid, action));
+          dispatch(contextAction(guid, popClientStateAction(action.message)));
+        }
+    }
+  }
+};
+
+var listQuery = {
+  onAction: (getState, dispatch, next, { action, guid }) => {
+    switch (action.type) {
+      case LIST_QUERY_RESPONSE:
+        {
+          const state = getState();
+          const options = optionsSelector(getLastStackState(getContext(state, guid)));
+          if (action.option >= 0 && action.option < options.length) {
+            next(contextAction(guid, action));
+            dispatch(contextAction(guid, popClientStateAction(options[action.option])));
+          }
+        }
+    }
+  }
+};
+
+const initialState$4 = {
+  'action_shield': {
+    slots: [{
+      require: 1
+    }]
+  },
+  'action_maneuver': {
+    slots: [{
+      require: 3
+    }]
+  },
+  'action_throw': {
+    slots: [{
+      require: 6
+    }]
+  },
+  'action_fireball': {
+    slots: [{
+      require: 5
+    }, {
+      require: 6
+    }]
+  }
+};
+
+/**
+ * @typedef {{require:number}} Slot
+ * @typedef {{slots:Array.<Slot>}} Action
+ * @typedef {Object.<string, Action>} AllActionState
+ */
+
+/**
+ * @param {AllActionState} state
+ * @param {*} action
+ * @returns {AllActionState}
+ */
+var allActionsReducer = function (state = initialState$4, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+};
+
+const initialState$5 = {
+  'class_mage': {
+    actions: ['action_shield', 'action_maneuver', 'action_throw', 'action_fireball']
+  },
+  'class_druid': {
+    actions: ['action_shield', 'action_maneuver', 'action_throw', 'action_fireball']
+  }
+};
+
+/**
+ * @typedef {{actions:Array.<string>}} Class
+ * @typedef {Object.<string,Class>} AllClassesState
+ */
+
+/**
+ * @param {AllClassesState} state
+ * @param {*} action
+ * @returns {AllClassesState}
+ */
+var allClassesReducer = function (state = initialState$5, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+};
+
+const initialState$6 = {
+  'race_human': {
+    maxHp: 10
+  },
+  'race_elf': {
+    maxHp: 10
+  }
+};
+
+/**
+ * @typedef {{maxHp:number}} Race
+ * @typedef {Object.<string,Race>} AllRacesState
+ */
+
+/**
+ * @param {AllRacesState} state
+ * @param {*} action
+ * @returns {AllRacesState}
+ */
+var allRacesReducer = function (state = initialState$6, action) {
+  switch (action.type) {
+    default:
+      return state;
+  }
+};
+
+const MESSAGE = 'MESSAGE';
+
+/**
+ * @typedef {{type: string, id:string, from: string, message: string}} MessageAction
+ */
+
+/**
+ * @param {string} id
+ * @param {string} from
+ * @param {string} message
+ * @returns {MessageAction}
+ */
+
+
+const initialState$7 = [];
+
+/**
+ * @typedef {{id:string, from: string, message: string}} Message
+ * @typedef {Array.<Message>} MessagesState
+ */
+
+/**
+ * @param {undefined | MessagesState} state
+ * @param {MessageAction} action
+ * @returns {* | MessagesState}
+ */
+function messagesReducer(state = initialState$7, action) {
+  switch (action.type) {
+    case MESSAGE:
+      return state.concat({
+        id: action.id,
+        from: action.from,
+        message: action.message
+      });
+    default:
+      return state;
+  }
+}
+
+const LOAD_STATE = 'LOAD_STATE';
+
+/**
+ * @param {{classes:Array}} state
+ * @returns {Array}
+ */
+function allClassesSelector(state) {
+  return state.classes;
+}
+
+/**
+ * @param {{races:Array}} state
+ * @returns {Array}
+ */
+function allRacesSelector(state) {
+  return state.races;
+}
+
+
+
+function rootReducer(state = {}, action) {
+  switch (action) {
+    case LOAD_STATE:
+      return action.state;
+    default:
+      return {
+        messages: messagesReducer(state.messages, action),
+        actions: allActionsReducer(state.actions, action),
+        classes: allClassesReducer(state.classes, action),
+        races: allRacesReducer(state.races, action),
+        contexts: allContextsReducer(state.contexts, action)
+      };
+  }
+}
+
+const BATTLE = 'BATTLE';
+
+var setup = {
+  onEnter: (getState, dispatch, next, { guid }) => {
+    dispatch(contextAction(guid, pushClientStateAction(INPUT_QUERY, createInputQuery({ id: 'name', query: 'Name?' }))));
+  },
+  onReturn: (getState, dispatch, next, { fromState, guid, returnState }) => {
+    const state = getState();
+    if (fromState.id === 'name') {
+      const allClasses = allClassesSelector(state);
+      next(contextAction(guid, setPlayerNameAction(returnState)));
+      dispatch(contextAction(guid, pushClientStateAction(LIST_QUERY, createListQuery({ id: 'class', query: 'Class?', options: allClasses }))));
+    }
+    if (fromState.id === 'class') {
+      const allClasses = allClassesSelector(state);
+      const allRaces = allRacesSelector(state);
+      next(contextAction(guid, setPlayerClassIdAction(allClasses[returnState])));
+      dispatch(contextAction(guid, pushClientStateAction(LIST_QUERY, createListQuery({ id: 'race', query: 'Race?', options: allRaces }))));
+    }
+    if (fromState.id === 'race') {
+      const allRaces = allRacesSelector(state);
+      next(contextAction(guid, setPlayerRaceIdAction(allRaces[returnState])));
+      dispatch(contextAction(guid, pushClientStateAction(BATTLE, {})));
+    }
+  }
+};
+
+//import introduction from './introduction'
+//import classSelection from './class-selection'
+//import townLobby from './town-lobby'
+//import rollDices from './roll-dices'
+//import assignDices from './assign-dices'
+//import battle from './battle'
+
+
+var clientStateHandlers = Object.freeze({
+	inputQuery: inputQuery,
+	listQuery: listQuery,
+	setup: setup
+});
+
+function serverMiddleware({ getState, dispatch }) {
+  return next => action => {
+    if (action.type === CONTEXT_SPAWNED) {
+      const result = next(action);
+      if (getContext(getState(), action.guid).length === 0) {
+        dispatch(contextAction(action.guid, pushClientStateAction(SETUP, {})));
+      }
+      return result;
+    }
+    if (action.type === CONTEXT_ACTION) {
+      switch (action.action.type) {
+        case STACK_PUSH:
+          {
+            let fromState = undefined;
+            if (getContext(getState(), action.guid).length > 0) {
+              fromState = getLastStackStateName(getContext(getState(), action.guid));
+            }
+            const result = next(action.action);
+            const name = getLastStackStateName(getContext(getState(), action.guid));
+            clientStateHandlers[name].onEnter(getState, dispatch, next, Object.assign({}, action, { fromState }));
+            return result;
+          }
+        case STACK_POP:
+          {
+            const fromState = getLastStackStateName(getContext(getState(), action.guid));
+            const result = next(action.action);
+            if (getContext(getState(), action.guid).length > 0) {
+              const name = getLastStackStateName(getContext(getState(), action.guid));
+              clientStateHandlers[name].onReturn(getState, dispatch, next, Object.assign({}, action, { fromState }));
+            }
+            return result;
+          }
+        default:
+          {
+            const name = getLastStackStateName(getContext(getState(), action.guid));
+            return clientStateHandlers[name].onAction(getState, dispatch, next, action);
+          }
+      }
+    } else {
+      return next(action);
+    }
+  };
 }
 
 function shallowEqual(oldState, newState) {
@@ -50,306 +704,6 @@ function shallowEqual(oldState, newState) {
   return !resultNewToOld && !resultOldToNew;
 }
 
-function changed(oldState, newState) {
-
-  return shallowEqual(oldState, newState) ? oldState : newState;
-}
-
-const STATE_NAME = 'chat';
-
-const MESSAGE = 'CHAT:MESSAGE';
-const SET_PLAYER_NAME = 'CHAT:PLAYER_NAME_SET';
-
-/**
- *
- * @param {string} to
- * @param {string} message
- * @param {string} from
- * @returns {{type: string, id:string, from: string, guid: string|undefined, to: string, message: string}}
- */
-function messageAction(to, message, from) {
-  return {
-    type: MESSAGE,
-    id: guid(),
-    from: from,
-    guid: to !== 'all' ? to : undefined,
-    to: to,
-    message: message
-  };
-}
-
-function setPlayerNameAction(playerName, guid$$1) {
-  return {
-    type: SET_PLAYER_NAME,
-    guid: guid$$1,
-    playerName: playerName
-  };
-}
-
-
-
-const initialState$1 = {
-  name: STATE_NAME,
-  playerName: 'Noname',
-  messages: []
-};
-
-function introduction(state = initialState$1, action) {
-  switch (action.type) {
-    case MESSAGE:
-      return Object.assign({}, state, {
-        messages: state.messages.concat({
-          id: action.id,
-          from: action.from,
-          to: action.to,
-          message: action.message
-        })
-      });
-    case SET_PLAYER_NAME:
-      return Object.assign({}, state, {
-        playerName: action.playerName
-      });
-    default:
-      return state;
-  }
-}
-
-//import rollDices from './roll-dices'
-//import introduction from './introduction'
-//import classSelection from './class-selection'
-//import townLobby from './town-lobby'
-//import assignDices from './assign-dices'
-//import battle from './battle'
-
-
-var clientStateReducers = Object.freeze({
-	chat: introduction
-});
-
-const CLIENT_STATE_LOAD = 'CLIENT_STATE_LOAD';
-const CLIENT_STATE_PUSH = 'CLIENT_STATE_PUSH';
-const CLIENT_STATE_POP = 'CLIENT_STATE_POP';
-
-function pushClientStateAction(name, initialState, guid) {
-  return {
-    type: CLIENT_STATE_PUSH,
-    guid: guid,
-    name: name,
-    initialState: initialState
-  };
-}
-
-
-
-
-
-function currentClientStateSelector(state) {
-  return state[state.length - 1];
-}
-
-function currentClientStateNameSelector(state) {
-  return currentClientStateSelector(state).name;
-}
-
-
-
-function contextReducer(state = [], action) {
-  switch (action.type) {
-    case CLIENT_STATE_LOAD:
-      return action.state;
-    case CLIENT_STATE_PUSH:
-      return state.concat(clientStateReducers[action.name](undefined, action));
-    case CLIENT_STATE_POP:
-      return state.slice(0, state.length - 1);
-    default:
-      {
-        if (state.length === 0) return state;
-        const newState = state.map(s => clientStateReducers[s.name](s, action));
-        return newState.find((s, index) => state[index] !== s) === undefined ? state : newState;
-      }
-  }
-}
-
-const CLIENT_SPAWNED = 'CLIENT_SPAWNED';
-const CLIENT_DESPAWNED = 'CLIENT_DESPAWNED';
-const ACTION_REQUEST = 'ACTION_REQUEST';
-
-function clientSpawnedAction(guid$$1) {
-  return {
-    type: CLIENT_SPAWNED,
-    guid: guid$$1
-  };
-}
-
-function clientDespawnedAction(guid$$1) {
-  return {
-    type: CLIENT_DESPAWNED,
-    guid: guid$$1
-  };
-}
-
-function actionRequest(action, guid$$1) {
-  return {
-    type: ACTION_REQUEST,
-    guid: guid$$1,
-    action: action
-  };
-}
-
-function clientSelector(state, guid$$1) {
-  return state.contexts[guid$$1].shared;
-}
-
-
-
-const initialState = {
-  connected: false,
-  shared: contextReducer(undefined, { type: '@INIT@' })
-};
-
-function clientContextReducer(state = initialState, action) {
-  switch (action.type) {
-    case CLIENT_SPAWNED:
-      return {
-        shared: contextReducer(state.shared, action),
-        connected: true
-      };
-    case CLIENT_DESPAWNED:
-      return {
-        shared: contextReducer(state.shared, action),
-        connected: false
-      };
-    default:
-      return changed(state, Object.assign({}, state, {
-        shared: contextReducer(state.shared, action)
-      }));
-  }
-}
-
-function allContextsReducer(state = {}, action) {
-  switch (action.type) {
-    case CLIENT_SPAWNED:
-      return Object.assign({}, state, { [action.guid]: clientContextReducer(state[action.guid], action) });
-    case CLIENT_DESPAWNED:
-      return Object.assign({}, state, { [action.guid]: clientContextReducer(state[action.guid], action) });
-    default:
-      return changed(state, Object.keys(state).reduce((newState, context) => {
-        if (action.guid) {
-          if (!context) throw Error('Should not be null');
-          if (action.guid === context) {
-            newState[context] = clientContextReducer(state[context], action);
-          } else {
-            newState[context] = state[context];
-          }
-        } else {
-          newState[context] = clientContextReducer(state[context], action);
-        }
-
-        return newState;
-      }, {}));
-  }
-}
-
-var globalReducer = redux.combineReducers({
-  contexts: allContextsReducer
-});
-
-const GM = 'GM';
-
-var battle = {
-  onEnter: (guid, getState, dispatch) => {
-    dispatch(messageAction(GM, guid, 'You are entering battle.'));
-    dispatch(pushClientStateAction('rollDices', guid));
-  },
-  onReturn: (guid, getState, dispatch, fromState, returnedState) => {
-    log.info(`${ guid } Return from state: `, fromState, returnedState);
-    if (fromState === 'rollDices') {
-      dispatch(pushClientStateAction('assignDices', {
-        rolledDices: returnedState.rolledDices
-      }, guid));
-    }
-  },
-  onCommand: (guid, getState, dispatch, command) => {
-    //const state = getState()
-
-  }
-};
-
-const STATE_NAME$1 = 'setup';
-
-function onMessage(getState, dispatch, action) {
-  if (currentClientStateNameSelector(getState()) === STATE_NAME) {
-    dispatch(setPlayerNameAction(action.message, action.guid));
-    dispatch(pushClientStateAction(STATE_NAME$1, {}, action.guid));
-  } else {
-    dispatch(action);
-  }
-}
-
-var chat = {
-  onEnter: (getState, dispatch, action) => {
-    dispatch(messageAction(action.guid, 'Name?', 'Chat System'));
-  },
-  onAction: (getState, dispatch, action) => {
-    switch (action.type) {
-      case MESSAGE:
-        return onMessage(getState, dispatch, action);
-    }
-  }
-};
-
-//import introduction from './introduction'
-//import classSelection from './class-selection'
-//import townLobby from './town-lobby'
-//import rollDices from './roll-dices'
-//import assignDices from './assign-dices'
-
-
-var clientStateHandlers = Object.freeze({
-	battle: battle,
-	chat: chat
-});
-
-function serverMiddleware({ getState, dispatch }) {
-  return next => action => {
-    if (action.type === CLIENT_SPAWNED) {
-      const result = next(action);
-      if (clientSelector(getState(), action.guid).length === 0) {
-        dispatch(pushClientStateAction(STATE_NAME, {}, action.guid));
-      }
-      return result;
-    } else if (action.type === CLIENT_STATE_PUSH) {
-      const result = next(action);
-      if (clientSelector(getState(), action.guid).length > 0) {
-        const name = currentClientStateNameSelector(clientSelector(getState(), action.guid));
-        log.info(`${ action.guid } entering state ${ name }`);
-        if (clientStateHandlers[name].onEnter) {
-          clientStateHandlers[name].onEnter(getState, dispatch, action);
-        }
-      }
-      return result;
-    } else if (action.type === CLIENT_STATE_POP) {
-      const fromStateName = currentClientStateNameSelector(clientSelector(getState(), action.guid));
-      const result = next(action);
-      if (clientSelector(getState(), action.guid).length > 0) {
-        const name = currentClientStateNameSelector(clientSelector(getState(), action.guid));
-        log.info(`${ action.guid } returning from ${ fromStateName } state  to ${ name } state`);
-        if (clientStateHandlers[name].onReturn) {
-          clientStateHandlers[name].onReturn(getState, dispatch, action, fromStateName);
-        }
-      }
-      return result;
-    } else if (action.type === ACTION_REQUEST) {
-      if (clientSelector(getState(), action.guid).length > 0) {
-        const name = currentClientStateNameSelector(clientSelector(getState(), action.guid));
-        clientStateHandlers[name].onAction(getState, dispatch, action);
-      }
-    } else {
-      return next(action);
-    }
-  };
-}
-
 function serverMiddleware$1(clientGuidToSocket, { getState }) {
   return next => action => {
     log.info(`Action ${ JSON.stringify(action) }`);
@@ -360,8 +714,8 @@ function serverMiddleware$1(clientGuidToSocket, { getState }) {
 
     Object.keys(stateAfter.contexts).forEach(key => {
 
-      const clientStateBefore = clientSelector(stateBefore, key);
-      const clientStateAfter = clientSelector(stateAfter, key);
+      const clientStateBefore = getContext(stateBefore, key);
+      const clientStateAfter = getContext(stateAfter, key);
 
       const stateChanged = !shallowEqual(clientStateBefore, clientStateAfter);
       const targetSocket = clientGuidToSocket[key];
@@ -395,7 +749,7 @@ try {
 }
 
 if (stateStr.trim().length === 0) stateStr = '{}';
-const store = redux.createStore(globalReducer, JSON.parse(stateStr), redux.applyMiddleware(serverMiddleware, serverMiddleware$1.bind(undefined, clientGuidToSocket)));
+const store = redux.createStore(rootReducer, JSON.parse(stateStr), redux.applyMiddleware(serverMiddleware, serverMiddleware$1.bind(undefined, clientGuidToSocket)));
 
 store.subscribe(function persistState() {
   const currentState = store.getState();
@@ -415,14 +769,14 @@ function onSocket(io, socket) {
     clientSocketIdToGuid[socket.id] = authToken;
     clientGuidToSocket[authToken] = socket;
     log.info(`client ??@${ clientId } authenticated as ${ authToken }`);
-    store.dispatch(clientSpawnedAction(authToken));
-    socket.emit('initial_state', store.getState().contexts[authToken].shared);
+    store.dispatch(contextSpawnedAction(authToken));
+    socket.emit('initial_state', store.getState());
   });
 
   socket.on('disconnect', function () {
     const guid = clientSocketIdToGuid[socket.id];
     log.info(`client ${ guid }@${ clientId } disconnected`);
-    store.dispatch(clientDespawnedAction(guid));
+    store.dispatch(contextDespawnedAction(guid));
     clientGuidToSocket[guid] = undefined;
     clientSocketIdToGuid[socket.id] = undefined;
   });
@@ -430,7 +784,7 @@ function onSocket(io, socket) {
   socket.on('command_request', function (action) {
     const guid = clientSocketIdToGuid[socket.id];
     log.info(`client ${ guid }@${ clientId } action: ${ JSON.stringify(action) }`);
-    store.dispatch(actionRequest(Object.assign({}, action, { guid }), guid));
+    store.dispatch(contextAction(guid, action));
   });
 }
 

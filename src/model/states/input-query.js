@@ -42,15 +42,15 @@ export function querySelector(state){
  * @param {string} query
  * @returns InputQuery
  */
-export function createInputQuery({id, query}) {
+export function createInputQuery({id = '', query = ''}) {
   return {
     name: INPUT_QUERY,
-    id: id,
-    query : query
+    id,
+    query
   }
 }
 
-const initialState = createInputQuery({id:'none', query:'none'})
+const initialState = createInputQuery({id:'', query:''})
 
 /**
  * @typedef {{name:string, id:string, query:string}} InputQueryState

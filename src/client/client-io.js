@@ -1,24 +1,27 @@
 import guid from '../utils/guid'
 import log from './log'
-import {loadClientStateAction} from '../model/client-reducer'
+import {loadStateAction} from '../model/index'
 
-export default function command({ getState, dispatch }) {
-  const socket = io()
-
+export function getClientGuid(){
   let authToken = localStorage.getItem('auth-token')
   if(!authToken){
     authToken = guid()
     localStorage.setItem('auth-token', authToken)
   }
+  return authToken
+}
+
+export default function command({ dispatch }) {
+  const socket = io()
 
   socket.on('connect', function onConnect(){
     log.info('connected')
-    socket.emit('authentication', authToken)
+    socket.emit('authentication', getClientGuid())
   })
 
   socket.on('initial_state', function onInitialState(state){
     log.info('initial_state', state)
-    dispatch(loadClientStateAction(state))
+    dispatch(loadStateAction(state))
   })
 
   socket.on('action', function onAction(action){
@@ -28,11 +31,7 @@ export default function command({ getState, dispatch }) {
   return (next) => (action) => {
     const actionJSON = JSON.stringify(action)
     log.info(`Action: ${actionJSON}`)
-    if(action.type === 'COMMAND_REQUEST'){
-      socket.emit('command_request', action)
-      return {}
-    } else {
-      return next(action)
-    }
+    socket.emit('command_request', action)
+    return {}
   }
 }

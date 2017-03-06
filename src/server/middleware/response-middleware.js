@@ -1,6 +1,6 @@
 import {shallowEqual} from '../../utils'
 import log from '../log'
-import {clientSelector} from '../../model/server-reducer';
+import {getContext} from '../../model/all-contexts-reducer'
 
 export default function serverMiddleware(clientGuidToSocket, {getState}) {
   return (next) => (action) => {
@@ -12,8 +12,8 @@ export default function serverMiddleware(clientGuidToSocket, {getState}) {
 
     Object.keys(stateAfter.contexts).forEach((key) => {
 
-      const clientStateBefore = clientSelector(stateBefore, key)
-      const clientStateAfter = clientSelector(stateAfter, key)
+      const clientStateBefore = getContext(stateBefore, key)
+      const clientStateAfter = getContext(stateAfter, key)
 
       const stateChanged = !shallowEqual(clientStateBefore, clientStateAfter)
       const targetSocket = clientGuidToSocket[key]

@@ -16,21 +16,21 @@ export function contextAction(guid, action){
  * @param {string} guid
  * @returns {{type: string, guid: string|undefined}}
  */
-export function clientSpawnedAction(guid) {
+export function contextSpawnedAction(guid) {
   return {
     type: CONTEXT_SPAWNED,
     guid: guid
   }
 }
 
-export function clientDespawnedAction(guid){
+export function contextDespawnedAction(guid){
   return {
     type: CONTEXT_DESPAWNED,
     guid: guid
   }
 }
 
-export function clientSelector(state, guid){
+export function getContext(state, guid){
   return state.contexts[guid]
 }
 

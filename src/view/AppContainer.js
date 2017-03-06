@@ -1,31 +1,28 @@
 import * as React from 'react'
 import {connect} from 'react-redux'
-import {currentClientStateSelector} from '../model/client-reducer'
 
 import * as clientStates from './states'
+import {getStack} from '../model/context-reducer'
+import {getContext} from '../model/all-contexts-reducer'
+import {getClientGuid} from '../client/client-io'
 
-class AppContainer extends React.Component {
-  constructor() {
-    super()
-  }
-
-  render(){
-    const {clientState} = this.props
-    if(!clientState) return <div>Loading...</div>
-
-    const StateContainer = clientStates[clientState.name]
-    return <StateContainer />
+const stackViewMapping = {
+  'setup:inputQuery': () => {
+    return <h1>Hello world from setup:inputQuery</h1>
   }
 }
 
-const mapDispatchToProps = function(dispatch) {
-  return {
-  }
+export function AppContainer({clientStateName}) {
+  return clientStateName ? stackViewMapping[clientStateName]() : <div>Loading...</div>
 }
 
-const mapStateToProps = function(state) {
+const mapDispatchToProps = function (dispatch) {
+  return {}
+}
+
+const mapStateToProps = function (state) {
   return {
-    clientState: currentClientStateSelector(state)
+    clientStateName: getStack(getContext(state, getClientGuid())).map(state => state.name).join(':')
   }
 }
 
