@@ -1,4 +1,3 @@
-"use strict";
 //import introduction from './introduction'
 //import classSelection from './class-selection'
 //import townLobby from './town-lobby'
@@ -6,4 +5,8 @@
 //import assignDices from './assign-dices'
 //import battle from './battle'
 //import chat from './chat'
-Object.defineProperty(exports, "__esModule", { value: true });
+
+export {
+  //introduction, classSelection, townLobby, rollDices, assignDices, battle,
+//chat
+}

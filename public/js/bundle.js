@@ -11,7 +11,7 @@
 
 const INPUT_QUERY = 'inputQuery';
 
-
+const QUERY_RESPONSE = 'INPUT_QUERY:QUERY_RESPONSE';
 
 /**
  * @typedef {{type: string, message: string}} ResponseAction
@@ -21,7 +21,12 @@ const INPUT_QUERY = 'inputQuery';
  * @param {string} message
  * @returns ResponseAction
  */
-
+function queryResponseAction(message) {
+  return {
+    type: QUERY_RESPONSE,
+    message
+  };
+}
 
 /**
  * @param {{id:string}} state
@@ -141,6 +146,8 @@ const initialState$3 = {
   name: SETUP
 };
 
+
+
 /**
  * @typedef {{
  *          name:string}} SetupState
@@ -239,7 +246,7 @@ const STACK_ACTION = 'STACK_ACTION';
  * @returns {Array}
  */
 function getStack(state) {
-  return state ? state.stack : undefined;
+  return state ? state.stack : [];
 }
 
 /**
@@ -250,7 +257,7 @@ function getStack(state) {
 
 /**
  * @param {{stack:Array}} state
- * @returns {Object}
+ * @returns {Object||undefined}
  */
 
 
@@ -274,6 +281,16 @@ const initialState = {
   stack: []
 };
 
+/**
+ * @typedef {{playerName: string, classId: string, raceId: string, actions: Array, stack: Array}} Context
+ */
+
+/**
+ * @param {Context} state
+ * @param {PlayerNameAction|PlayerClassIdAction|PlayerRaceIdAction|PushClientStateAction} action
+ * @param clientStateReducers
+ * @returns {Context}
+ */
 function contextReducer(state = initialState, action, clientStateReducers = allClientStateReducers) {
   switch (action.type) {
     case PLAYER_NAME_SET:
@@ -294,7 +311,7 @@ function contextReducer(state = initialState, action, clientStateReducers = allC
       });
     case STACK_POP:
       return Object.assign({}, state, {
-        stack: state.stack.slice(0, state.length - 1)
+        stack: state.stack.slice(0, state.stack.length - 1)
       });
     case STACK_ACTION:
       {
@@ -305,39 +322,7 @@ function contextReducer(state = initialState, action, clientStateReducers = allC
           });
         }
         return state;
-        return;
       }
-    default:
-      return state;
-  }
-}
-
-const CONTEXT_SPAWNED = 'CONTEXT_SPAWNED';
-const CONTEXT_DESPAWNED = 'CONTEXT_DESPAWNED';
-const CONTEXT_ACTION = 'CONTEXT_ACTION';
-
-
-
-/**
- * @param {string} guid
- * @returns {{type: string, guid: string|undefined}}
- */
-
-
-
-
-function getContext(state, guid) {
-  return state.contexts[guid];
-}
-
-function allContextsReducer(state = {}, action) {
-  switch (action.type) {
-    case CONTEXT_SPAWNED:
-      return Object.assign({}, state, { [action.guid]: contextReducer(state[action.guid], action) });
-    case CONTEXT_DESPAWNED:
-      return Object.assign({}, state, { [action.guid]: contextReducer(state[action.guid], action) });
-    case CONTEXT_ACTION:
-      return Object.assign({}, state, { [action.guid]: contextReducer(state[action.guid], action.action) });
     default:
       return state;
   }
@@ -366,6 +351,33 @@ var log = {
     console.error(...args);
   }
 };
+
+const CONTEXT_SPAWNED = 'CONTEXT_SPAWNED';
+const CONTEXT_DESPAWNED = 'CONTEXT_DESPAWNED';
+const CONTEXT_ACTION = 'CONTEXT_ACTION';
+
+
+
+/**
+ * @param {string} guid
+ * @returns {{type: string, guid: string|undefined}}
+ */
+
+
+
+
+function allContextsReducer(state = {}, action) {
+  switch (action.type) {
+    case CONTEXT_SPAWNED:
+      return Object.assign({}, state, { [action.guid]: contextReducer(state[action.guid], action) });
+    case CONTEXT_DESPAWNED:
+      return Object.assign({}, state, { [action.guid]: contextReducer(state[action.guid], action) });
+    case CONTEXT_ACTION:
+      return Object.assign({}, state, { [action.guid]: contextReducer(state[action.guid], action.action) });
+    default:
+      return state;
+  }
+}
 
 const initialState$4 = {
   'action_shield': {
@@ -522,8 +534,17 @@ function loadStateAction(state) {
   };
 }
 
+/**
+ * @param state
+ * @param guid
+ * @returns {Context}
+ */
+function getContext(state, guid) {
+  return state.contexts[guid];
+}
+
 function rootReducer(state = {}, action) {
-  switch (action) {
+  switch (action.type) {
     case LOAD_STATE:
       return action.state;
     default:
@@ -546,56 +567,78 @@ function getClientGuid() {
   return authToken;
 }
 
-function command({ dispatch }) {
+function command({ dispatch, getState }) {
   const socket = io();
 
-  socket.on('connect', function onConnect() {
-    log.info('connected');
-    socket.emit('authentication', getClientGuid());
-  });
+  return next => {
+    socket.on('connect', function onConnect() {
+      log.info('connected');
+      socket.emit('authentication', getClientGuid());
+    });
 
-  socket.on('initial_state', function onInitialState(state) {
-    log.info('initial_state', state);
-    dispatch(loadStateAction(state));
-  });
+    socket.on('state_sync', state => {
+      log.info('state_sync', state);
+      next(loadStateAction(state));
+    });
 
-  socket.on('action', function onAction(action) {
-    dispatch(action);
-  });
+    socket.on('action', function onAction(action) {
+      log.info('dispatched', JSON.stringify(action, undefined, 2));
+      log.info('state before', getState());
+      next(action);
+      log.info('state after', getState());
+    });
 
-  return next => action => {
-    const actionJSON = JSON.stringify(action);
-    log.info(`Action: ${ actionJSON }`);
-    socket.emit('command_request', action);
-    return {};
+    return action => {
+      const actionJSON = JSON.stringify(action);
+      log.info(`Action: ${actionJSON}`);
+      socket.emit('command_request', action);
+      return {};
+    };
   };
 }
 
 const stackViewMapping = {
-  'setup:inputQuery': () => {
+  'setup:inputQuery': ([setupState, { query }], dispatch) => {
+    let inputVal = '';
     return React.createElement(
-      'h1',
+      'div',
       null,
-      'Hello world from setup:inputQuery'
+      React.createElement(
+        'span',
+        null,
+        'Please provide your ',
+        query
+      ),
+      React.createElement('input', { type: 'text', onChange: event => {
+          inputVal = event.target.value;
+        } }),
+      React.createElement('input', { type: 'button', value: 'Send', onClick: () => {
+          dispatch(queryResponseAction(inputVal));
+        } })
     );
   }
 };
 
-function AppContainer({ clientStateName }) {
-  return clientStateName ? stackViewMapping[clientStateName]() : React.createElement(
+function AppContainer({ clientStateName, stack, dispatch }) {
+  const view = stackViewMapping[clientStateName] || (() => React.createElement(
     'div',
     null,
-    'Loading...'
-  );
+    'View: \'',
+    clientStateName,
+    '\' not found'
+  ));
+  return view(stack, dispatch);
 }
 
 const mapDispatchToProps = function (dispatch) {
-  return {};
+  return { dispatch };
 };
 
 const mapStateToProps = function (state) {
+  const stack = getStack(getContext(state, getClientGuid()));
   return {
-    clientStateName: getStack(getContext(state, getClientGuid())).map(state => state.name).join(':')
+    clientStateName: stack.map(state => state.name).join(':'),
+    stack: stack
   };
 };
 

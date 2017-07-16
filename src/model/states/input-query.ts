@@ -1,10 +1,11 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.INPUT_QUERY = 'inputQuery';
-exports.QUERY_RESPONSE = 'INPUT_QUERY:QUERY_RESPONSE';
+export const INPUT_QUERY = 'inputQuery'
+
+export const QUERY_RESPONSE = 'INPUT_QUERY:QUERY_RESPONSE'
+
 /**
  * @typedef {{type: string, message: string}} ResponseAction
  */
+
 /**
  * @param {string} message
  * @returns ResponseAction
@@ -15,6 +16,7 @@ exports.QUERY_RESPONSE = 'INPUT_QUERY:QUERY_RESPONSE';
     message
   }
 }*/
+
 /**
  * @param {{id:string}} state
  * @returns string
@@ -22,6 +24,7 @@ exports.QUERY_RESPONSE = 'INPUT_QUERY:QUERY_RESPONSE';
 /*export function idSelector(state){
   return state.id
 }*/
+
 /**
  * @param {{query:string}} state
  * @returns string
@@ -29,9 +32,11 @@ exports.QUERY_RESPONSE = 'INPUT_QUERY:QUERY_RESPONSE';
 /*export function querySelector(state){
   return state.query
 }*/
+
 /**
  * @typedef {{name: string, id: string, query: string}} InputQuery
  */
+
 /**
  * @param {string} id
  * @param {string} query
@@ -44,10 +49,13 @@ exports.QUERY_RESPONSE = 'INPUT_QUERY:QUERY_RESPONSE';
     query
   }
 }*/
+
 //const initialState = createInputQuery({id:'', query:''})
+
 /**
  * @typedef {{name:string, id:string, query:string}} InputQueryState
  */
+
 /**
  * @param {InputQueryState} state
  * @param {*} action
@@ -58,4 +66,4 @@ exports.QUERY_RESPONSE = 'INPUT_QUERY:QUERY_RESPONSE';
     default :
       return state
   }
-}*/ 
+}*/

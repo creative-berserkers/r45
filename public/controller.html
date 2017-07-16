@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <script type="text/javascript" src="/public/js/socket.io.js"></script>
+    <script type="text/javascript" src="/public/js/redux.js"></script>
+    <script type="text/javascript" src="/public/js/react.js"></script>
+    <script type="text/javascript" src="/public/js/react-dom.js"></script>
+    <script type="text/javascript" src="/public/js/react-redux.js"></script>
+    <script>
+      const socket = io()
+      socket.on('connect', function onConnect(){
+        log.info('connected')
+        socket.emit('controller-connect')
+
+        socket.on('state-sync', (state)=>{
+          console.log('initial state', state);
+        })
+
+        socket.on('state-action', (state)=>{
+          console.log('state-action', state);
+        })
+      })
+    </script>
+</body>
+</html>

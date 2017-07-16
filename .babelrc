@@ -1,9 +1,15 @@
 {
   "presets": [
+    ["env", {
+      "targets": {
+        "node": "8.1"
+      },
+      "debug": true
+    }],
     "react"
   ],
-  "plugins": ["transform-class-properties",
-    "transform-decorators-legacy",
-    ["transform-object-rest-spread", { "useBuiltIns": true }],
-    "transform-function-bind"]
+  "plugins": [
+    ["transform-object-rest-spread", { "useBuiltIns": true }]
+  ],
+  "sourceMaps" : true
 }

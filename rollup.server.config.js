@@ -37,6 +37,7 @@ export default {
     'path',
     'http',
     'socket.io',
-    'fs'
+    'fs',
+    'minimatch'
   ],
 }

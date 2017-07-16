@@ -1,0 +1,15 @@
+{
+  "files": [
+    "src/server/game-server.ts"
+  ],
+  "compilerOptions": {
+    "removeComments": true,
+    "outDir": "dist",
+    "target": "es6",
+    "module": "CommonJS",
+    "lib": ["es6", "dom"],
+    "inlineSourceMap":true,
+    "strict": true,
+    "jsx": "react"
+  }
+}
