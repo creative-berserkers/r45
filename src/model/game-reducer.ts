@@ -1,99 +1,83 @@
-import {createStackReducer, nextState, push, splitHead, Stack, State} from './stack-reducer'
-import {Action} from "redux";
+import {createStackReducer, push, ReducersMap, splitHead, Stack, StackReducer, State} from './stack-reducer'
+import {Action} from 'redux'
 
-const playerSetupReducer = createStackReducer({})
-
-
-export type PLAYER_JOIN = 'PLAYER_JOIN'
-export const PLAYER_JOIN: PLAYER_JOIN = 'PLAYER_JOIN'
-
-
-export interface PlayerJoinAction extends Action {
-    type: PLAYER_JOIN,
-    playerId: string
+export interface GroupState {
 }
 
-export const joinPlayer = (playerId: string): PlayerJoinAction => {
-    return {
-        type: PLAYER_JOIN,
-        playerId
-    }
-}
-export type PLAYER_ACTION = 'PLAYER_ACTION'
-export const PLAYER_ACTION: PLAYER_ACTION = 'PLAYER_ACTION'
-
-export interface PlayerActiom extends Action {
-    type: PLAYER_ACTION,
-    playerId: string,
-    wrappedAction: Action
+export type GroupsState = {
+  [key: string]: GroupState
 }
 
-export const playerAction = (playerId: string, wrappedAction: Action): PlayerActiom => {
-    return {
-        type: PLAYER_ACTION,
-        playerId,
-        wrappedAction
-    }
+export interface UnitState {
+  name: string
+  classId: string
+  groupId: string
+  actions: string[]
 }
 
-export type GAME_START = 'GAME_START'
-export const GAME_START: GAME_START = 'GAME_START'
-
-export interface StartGameAction extends Action {
-    type: GAME_START
+export type UnitsState = {
+  [key: string]: UnitState
 }
 
-export const startGame = (): StartGameAction => {
-    return {
-        type: GAME_START
-    }
+export interface ActionState {
+  name: string
+  description: string
+  select: string
 }
 
-export interface PlayersMap {
-    [key:string]:Stack
+export interface ActionsState {
+  [key: string]: ActionState
 }
 
-export interface JoinState extends State {
-    players: PlayersMap
+export type INIT_STATE_ID = ''
+export const INIT_STATE_ID: INIT_STATE_ID = ''
+
+export type BATTLE_STATE_ID = 'battle'
+export const BATTLE_STATE_ID: BATTLE_STATE_ID = 'battle'
+
+export type AllStateId = BATTLE_STATE_ID | INIT_STATE_ID
+
+export interface BattleState extends State<AllStateId> {
+  groups: GroupsState
+  units: UnitsState
+  actions: ActionsState
 }
 
-export const gameReducer = createStackReducer({
-    '': (stack: Stack, action: Action) => push(stack, nextState('join',{players: {}})),
 
-    'join': (stack: Stack, action: Action) => {
-        switch (action.type) {
-            case PLAYER_JOIN: {
-                const [tail, head] = splitHead(stack)
-                if (head === undefined) return stack
-                const state = head as JoinState;
-                const playerJoinAction = action as PlayerJoinAction;
-                return [...tail, {...head, players: {...state.players, [playerJoinAction.playerId]: []}}]
-            }
-            case PLAYER_ACTION: {
-                const [tail, head] = splitHead(stack)
-                if(head === undefined) return stack
-                const state = head as JoinState
-                const playerAction = action as PlayerActiom
-                return [...tail, {
-                    ...head,
-                    players: {
-                        ...state.players,
-                        [playerAction.playerId]: playerSetupReducer(state.players[playerAction.playerId], playerAction.wrappedAction)
-                    }
-                }]
-            }
-            case 'GAME_START': {
-                const [tail, head] = splitHead(stack)
-                if(head === undefined) return stack
-                const state = head as JoinState;
-                return [...tail, nextState('play', {players: state.players})]
-            }
-            default:
-                return stack
-        }
-    },
+export const battleState: BattleState = {
+  stateId: 'battle',
+  groups: {
+    'group1': {},
+    'group2': {},
+    'group3': {}
+  },
+  units: {
+    'unit1': {name: 'Richard', classId: 'mage', groupId: 'group1', actions: ['maneuver', 'fireball']},
+    'unit2': {name: 'Steve', classId: 'warrior', groupId: 'group2', actions: ['maneuver', 'sword-cut']},
+    'unit3': {name: 'Garry', classId: 'hunter', groupId: 'group3', actions: ['maneuver', 'piercing-arrow']}
+  },
+  actions: {
+    'maneuver': {name: 'Maneuver', description: 'Moves your character to neighbour group', select: 'group'},
+    'fireball': {name: 'Fireball', description: 'Fires a ball of fire at remote group unit', select: 'unit'},
+    'sword-cut': {name: 'Sword cut', description: 'Performs a sword cut', select: 'unit'},
+    'piercing-arrow': {name: 'Piercing Arrow', description: 'Shots an arrow at remote group unit', select:'unit'}
+  }
+}
 
-    'play': (stack: Stack, action: Action) => {
-        return stack
-    }
+export type GameStates = (BattleState)
+export type GameActions = Action
+
+export const initReducer: StackReducer<GameStates, AllStateId, GameActions> = (stack, action) => push(stack, battleState)
+
+export const battleReducer: StackReducer<GameStates, AllStateId, GameActions> = (stack: Stack<BattleState, AllStateId>, action: GameActions) => {
+
+  return stack
+}
+
+export type GameReducer = (state: Stack<GameStates, AllStateId>, action: GameActions) => Stack<GameStates, AllStateId>
+
+export const gameReducer: GameReducer = createStackReducer({
+  '': initReducer,
+
+  'battle': battleReducer
 })

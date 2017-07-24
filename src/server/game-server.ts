@@ -19,6 +19,6 @@ io.on('connection', serverIO)
 server.listen(port, host, function(err:Error) {
   if (err) log.error(err)
   else {
-    log.info(`Listening at http://${host}:${port}`)
+    log.info(`Listening  at http://${host}:${port}`)
   }
 })

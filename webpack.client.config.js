@@ -4,15 +4,15 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
   entry: {
-    devServer: 'webpack/hot/dev-server',
     client:'webpack-hot-middleware/client',
+    //devServer: 'webpack/hot/dev-server',
     index:'./src/client/index.tsx'
   },
   output: {
-    filename: "build/[name]-bundle.js"
+    filename: 'build/[name]-bundle.js'
   },
   plugins: [
-    new webpack.optimize.ModuleConcatenationPlugin(),
+    new webpack.optimize.OccurrenceOrderPlugin(),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoEmitOnErrorsPlugin(),
     new HtmlWebpackPlugin({
@@ -35,7 +35,7 @@ module.exports = {
       },
       {
         test: /\.(jpe?g|png|gif|svg|eot|woff|woff2|ttf)$/i,
-        use: "file-loader?name=[name].[ext]"
+        use: 'file-loader?name=[name].[ext]'
       },
       {
         test: /\.css$/,
@@ -48,7 +48,7 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.js']
+    extensions: ['.ts', '.tsx', '.js', '.jsx']
   },
   devtool: 'source-map'
 }

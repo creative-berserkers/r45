@@ -7,7 +7,7 @@
     "outDir": "dist",
     "target": "es6",
     "module": "CommonJS",
-    "lib": ["es6", "dom"],
+    "lib": ["es6", "dom", "es2015", "es2015.promise"],
     "inlineSourceMap":true,
     "strict": true,
     "jsx": "react"

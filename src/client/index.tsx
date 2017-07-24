@@ -1,20 +1,35 @@
-import AppContainer from '../view/AppContainer'
+import * as injectTapEventPlugin from 'react-tap-event-plugin'
 import rootReducer from '../model'
 import {commandMiddleware} from './client-io'
 import {createStore, applyMiddleware, compose} from 'redux'
 import {Provider} from 'react-redux'
 import * as ReactDOM from 'react-dom'
 import * as React from 'react'
-import '../assets/css/bootstrap.min.css'
-import '../assets/css/bootstrap-theme.min.css'
-import '../assets/css/style.css'
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
 
 
-const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+injectTapEventPlugin()
+
+
+const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
 const store = createStore(rootReducer, composeEnhancers(applyMiddleware(commandMiddleware as any)))
 
-ReactDOM.render(
-    <Provider store={store}>
-      <AppContainer/>
-    </Provider>
-    ,document.getElementById('mount'))
+const render = ()=> {
+  import('../view/Game').then(({ default: Component })=>{
+    ReactDOM.render(
+
+        <Provider store={store}>
+          <MuiThemeProvider>
+          <Component/>
+          </MuiThemeProvider>
+        </Provider>
+
+        , document.getElementById('mount'))
+  })
+}
+
+render()
+
+if ((module as any).hot) {
+  (module as any).hot.accept(render)
+}

@@ -15,7 +15,8 @@ function getClientGuid() {
 exports.getClientGuid = getClientGuid;
 exports.commandMiddleware = function (_a) {
     var dispatch = _a.dispatch, getState = _a.getState;
-    var socket = io('http://localhost:9090/');
+    var socket = io('http://localhost:9090/', { autoConnect: false, reconnection: false });
+    socket.io.autoConnect;
     return function (next) {
         socket.on('connect', function onConnect() {
             log_1.default.info('connected');
@@ -30,6 +31,9 @@ exports.commandMiddleware = function (_a) {
             log_1.default.info('state before', getState());
             next(action);
             log_1.default.info('state after', getState());
+        });
+        socket.on('connect_error', function () {
+            console.log("Sorry, there seems to be an issue with the connection!");
         });
         return function (action) {
             var actionJSON = JSON.stringify(action);

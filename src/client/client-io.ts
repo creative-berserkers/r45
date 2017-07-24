@@ -14,7 +14,9 @@ export function getClientGuid(){
 }
 
 export const commandMiddleware: Middleware = <S>({ dispatch, getState }:MiddlewareAPI<S>) => {
-  const socket = io('http://localhost:9090/')
+  const socket = io('http://localhost:9090/', {autoConnect: false, reconnection: false})
+
+  socket.io.autoConnect
 
   return (next:Dispatch<S>) => {
     socket.on('connect', function onConnect(){
@@ -32,6 +34,10 @@ export const commandMiddleware: Middleware = <S>({ dispatch, getState }:Middlewa
       log.info('state before',getState())
       next(action)
       log.info('state after',getState())
+    })
+
+    socket.on('connect_error', function() {
+      console.log("Sorry, there seems to be an issue with the connection!");
     })
 
     return <A extends Action>(action:A):any => {

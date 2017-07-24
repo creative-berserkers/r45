@@ -4,13 +4,13 @@
   "description": "...",
   "scripts": {
     "build:client": "webpack --config webpack.client.config.js -p",
-    "build:server": "webpack --config webpack.server.config.js -p",
+    "build:server": "tsc",
     "build:all": "yarn run build:client && yarn run build:server",
     "watch:client": "node_modules/.bin/nodemon --watch src/client --watch src/model --watch src/view --watch src/utils -e js,css --exec \"yarn run build:client\"",
     "watch:server": "node_modules/.bin/nodemon --watch src/server --watch src/model --watch src/utils -e js --exec \"yarn run build:server && node server.bundle.js \"",
     "build": "yarn run build:all",
     "start:ui": "node src/client/ui-server.js",
-    "start:server": "nodemon --inspect --debug-brk src/server/game-server.js --exec babel-node -e --source-maps js",
+    "start:server": "nodemon dist/server/game-server.js --exec node js",
     "debug": "node --inspect-brk server.bundle.js",
     "debug:watch:server": "node_modules/.bin/nodemon --watch src/server --watch src/model --watch src/utils -e js --exec \"yarn run build:server && node --inspect-brk server.bundle.js\"",
     "debug:ext": "./node_modules/.bin/node-debug --hidden node_modules/ --debug-brk false server.bundle.js",
@@ -26,11 +26,13 @@
   "license": "CC0-1.0",
   "devDependencies": {
     "@types/express": "^4.0.36",
+    "@types/material-ui": "^0.17.17",
     "@types/minimatch": "^2.0.29",
     "@types/react-dom": "^15.5.1",
     "@types/react-redux": "^4.4.45",
     "@types/socket.io": "^1.4.29",
     "@types/socket.io-client": "^1.4.29",
+    "@types/node": "^8.0.10",
     "babel-cli": "v7.0.0-alpha.12",
     "babel-core": "v7.0.0-alpha.12",
     "babel-loader": "^7.1.1",
@@ -52,13 +54,16 @@
     "file-loader": "^0.11.2",
     "html-loader": "^0.4.5",
     "html-webpack-plugin": "^2.29.0",
+    "immutable": "v4.0.0-rc.2",
     "inspect-process": "^0.4.2",
+    "material-ui": "^0.18.6",
     "minimatch": "^3.0.4",
     "mocha": "^3.4.2",
     "nodemon": "^1.10.2",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
     "react-redux": "^5.0.5",
+    "react-tap-event-plugin": "^2.0.1",
     "redux": "^3.6.0",
     "socket.io": "^2.0.3",
     "socket.io-client": "^2.0.3",
@@ -67,11 +72,11 @@
     "typescript": "^2.4.1",
     "webpack": "^3.0.0",
     "webpack-dev-middleware": "^1.11.0",
-    "webpack-hot-middleware": "^2.18.0",
+    "webpack-hot-middleware": "^2.18.2",
     "winston": "^2.3.1",
     "ws": "^3.0.0"
   },
   "dependencies": {
-    "@types/node": "^8.0.10"
+    "@types/react-tap-event-plugin": "0.0.30"
   }
 }
