@@ -25,14 +25,16 @@
   "author": "Krzysztof Kabat (https://github.com/Odrinwhite)",
   "license": "CC0-1.0",
   "devDependencies": {
+    "@types/chai": "^4.0.1",
     "@types/express": "^4.0.36",
     "@types/material-ui": "^0.17.17",
-    "@types/minimatch": "^2.0.29",
+    "@types/mocha": "^2.2.41",
+    "@types/node": "^8.0.10",
     "@types/react-dom": "^15.5.1",
     "@types/react-redux": "^4.4.45",
+    "@types/react-tap-event-plugin": "0.0.30",
     "@types/socket.io": "^1.4.29",
     "@types/socket.io-client": "^1.4.29",
-    "@types/node": "^8.0.10",
     "babel-cli": "v7.0.0-alpha.12",
     "babel-core": "v7.0.0-alpha.12",
     "babel-loader": "^7.1.1",
@@ -67,9 +69,12 @@
     "redux": "^3.6.0",
     "socket.io": "^2.0.3",
     "socket.io-client": "^2.0.3",
+    "stack-fsm-reducer": "^1.1.4",
     "style-loader": "^0.18.2",
     "ts-loader": "^2.2.2",
-    "typescript": "^2.4.1",
+    "tslint": "^5.4.3",
+    "tslint-config-standard": "^6.0.1",
+    "typescript": "^2.5.2",
     "webpack": "^3.0.0",
     "webpack-dev-middleware": "^1.11.0",
     "webpack-hot-middleware": "^2.18.2",
@@ -77,6 +82,6 @@
     "ws": "^3.0.0"
   },
   "dependencies": {
-    "@types/react-tap-event-plugin": "0.0.30"
+    "ts-node": "^3.3.0"
   }
 }

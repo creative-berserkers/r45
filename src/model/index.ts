@@ -1,6 +1,6 @@
 import {AllStateId, gameReducer, GameStates} from './game-reducer'
-import {Action} from "redux";
-import {Stack} from './stack-reducer'
+import {Action} from "redux"
+import {Stack} from 'stack-fsm-reducer'
 
 const LOAD_STATE = 'LOAD_STATE'
 

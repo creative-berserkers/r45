@@ -1,29 +1,26 @@
-
 import * as React from 'react'
-import {Card} from './Card'
+import { Card } from './Card'
 
 
 export interface ActionStateProps {
   actionId: string
   name: string
   description: string
-  onClick: (actionId:string) => void
+  onClick: (actionId: string) => void
 }
 
 export class Action extends React.Component<ActionStateProps, {}> {
 
-  onClick = ()=>{
-    if(this.props.onClick){
+  onClick = () => {
+    if (this.props.onClick) {
       this.props.onClick(this.props.actionId)
     }
   }
 
-  render() {
+  render () {
     const {children, name, description} = this.props
 
-    const drawerStyle:React.CSSProperties = {
-
-    }
+    const drawerStyle: React.CSSProperties = {}
 
     return <Card onClick={this.onClick}>
       <div>{name}</div>

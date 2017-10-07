@@ -7,9 +7,12 @@
     "outDir": "dist",
     "target": "es6",
     "module": "CommonJS",
-    "lib": ["es6", "dom", "es2015", "es2015.promise"],
-    "inlineSourceMap":true,
+    "lib": ["es6", "dom", "es2015.collection", "es2015.promise"],
+    "sourceMap": true,
     "strict": true,
     "jsx": "react"
-  }
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
 }

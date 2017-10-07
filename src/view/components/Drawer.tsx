@@ -1,17 +1,16 @@
-
 import * as React from 'react'
 
-
 export interface DrawerStateProps {
-
+  style?: React.CSSProperties
 }
 
 export class Drawer extends React.Component<DrawerStateProps, {}> {
 
-  render() {
-    const {children} = this.props
+  render () {
+    const {children, style} = this.props
 
-    const drawerStyle:React.CSSProperties = {
+    const drawerStyle: React.CSSProperties = {
+      ...style,
       color: 'rgba(0, 0, 0, 0.87)',
       backgroundColor: 'rgb(255, 255, 255)',
       boxSizing: 'border-box',
@@ -21,14 +20,9 @@ export class Drawer extends React.Component<DrawerStateProps, {}> {
       zIndex: 1,
       fontFamily: 'Roboto, sans-serif',
       transition: 'all 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms',
-      position:'fixed',
-      bottom: '0px',
-      left:'10px',
-      right:'10px',
-      height: '200px',
       display: 'flex',
       flexDirection: 'row',
-      overflowX: 'scroll',
+      overflowX: 'auto',
       padding: '20px'
     }
 

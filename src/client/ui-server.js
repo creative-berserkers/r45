@@ -9,28 +9,11 @@ const app = express()
 
 app.use(webpackDevMiddleware(compiler,{
   noInfo: false,
-  quiet:false,
-  stats: {
-    assets: true,
-    colors: true,
-    version: true,
-    hash: true,
-    timings: true,
-    chunks: true,
-    chunkModules: true
-  },
-  extensions: ['.ts', '.tsx', '.js'],
   publicPath: webpackConfig.output.publicPath,
 
 }))
 
-app.use(webpackHotMiddleware(compiler, {
-  noInfo: false,
-  quiet:false,
-  headers: {
-    'Access-Control-Allow-Origin': '*'
-  }
-}))
+app.use(webpackHotMiddleware(compiler))
 
 //app.use(express.static('public'))
 
