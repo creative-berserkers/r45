@@ -1,13 +1,42 @@
 import * as React from 'react'
+import {ReactChild, ReactElement} from 'react'
+
+export class DrawerBody extends React.Component<{}, {}> {
+  render(){
+    const {children} = this.props
+    return <div>{children}</div>
+  }
+}
+
+export class DrawerSide extends React.Component<{}, {}> {
+  render(){
+    const {children} = this.props
+    return <div>{children}</div>
+  }
+}
 
 export interface DrawerStateProps {
   style?: React.CSSProperties
 }
 
-export class Drawer extends React.Component<DrawerStateProps, {}> {
+export default class Drawer extends React.Component<DrawerStateProps, {}> {
 
   render () {
     const {children, style} = this.props
+
+    let DrawerBodyElement = <DrawerBody />
+    let DrawerSideElement = <DrawerSide />
+
+    React.Children.toArray(children).forEach((child:ReactChild) => {
+        if(typeof child !== 'string' && typeof child !== 'number'){
+            if (child.type === DrawerBody) {
+                DrawerBodyElement = child
+            }
+            if (child.type === DrawerSide) {
+                DrawerSideElement = child
+            }
+        }
+    })
 
     const drawerStyle: React.CSSProperties = {
       ...style,
@@ -26,6 +55,9 @@ export class Drawer extends React.Component<DrawerStateProps, {}> {
       padding: '20px'
     }
 
-    return <div style={drawerStyle}>{children}</div>
+    return <div style={drawerStyle}>
+      <div>{DrawerBodyElement || ''}</div>
+      <div>{DrawerSideElement || ''}</div>
+    </div>
   }
 }
