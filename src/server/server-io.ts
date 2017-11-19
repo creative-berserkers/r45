@@ -4,8 +4,8 @@ import serverMiddleware from './middleware/server-middleware'
 import responseMiddleware from './middleware/response-middleware'
 import log from './log'
 import {createStore, applyMiddleware} from 'redux'
-import {contextDespawnedAction, contextSpawnedAction, contextAction} from '../model/all-contexts-reducer';
-import rootReducer from '../model'
+//import {contextDespawnedAction, contextSpawnedAction, contextAction} from '../model/all-contexts-reducer';
+//import rootReducer from '../model'
 import Socket = SocketIO.Socket;
 //import {loadStateAction} from '../model/index'
 
@@ -34,7 +34,7 @@ try {
 }
 
 if (stateStr.trim().length === 0) stateStr = '{}'
-const store = createStore(rootReducer, JSON.parse(stateStr), applyMiddleware(serverMiddleware, responseMiddleware.bind(undefined, clientGuidToSocket, () => controllerSocket)))
+const store = createStore(()=>{}, JSON.parse(stateStr), applyMiddleware(serverMiddleware, responseMiddleware.bind(undefined, clientGuidToSocket, () => controllerSocket)))
 
 store.subscribe(function persistState() {
     const currentState = store.getState()
@@ -60,7 +60,7 @@ export default function onSocket(socket: Socket) {
         clientGuidToSocket[guid] = socket
         log.info(`client ??@${clientId} authenticated as ${guid}`)
         socket.emit('state_sync', store.getState());
-        store.dispatch(contextSpawnedAction(guid))
+        //store.dispatch(contextSpawnedAction(guid))
     })
 
     socket.on('disconnect', function () {

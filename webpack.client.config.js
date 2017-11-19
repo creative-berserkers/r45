@@ -16,6 +16,7 @@ module.exports = {
       template: 'html-loader?interpolate=require!src/assets/index.html'
     })
   ],
+  devtool: 'inline-source-map',
   module: {
     rules: [
       {

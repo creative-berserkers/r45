@@ -9,7 +9,7 @@ const app = express()
 
 app.use(webpackDevMiddleware(compiler,{
   noInfo: false,
-  publicPath: webpackConfig.output.publicPath,
+  publicPath: '/',
 
 }))
 
@@ -18,6 +18,7 @@ app.use(webpackHotMiddleware(compiler))
 //app.use(express.static('public'))
 
 app.listen(8080,function () {
+  console.log(`Public path: ${webpackConfig.output.publicPath}`)
   console.log('UI listening on port 8080!')
 })
 
