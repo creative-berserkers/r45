@@ -58,7 +58,10 @@ export default class Button extends React.Component<ButtonProps, {}> {
             style={{...buttonStyle, ...style,
                 backgroundColor: disabled ? 'rgb(229, 229, 229)' : 'rgb(0, 188, 212)'
             }}
-            onClick={onClick}
+            onClick={event => {
+                event.stopPropagation()
+                onClick()
+            }}
             disabled={disabled}
         >
             <div>

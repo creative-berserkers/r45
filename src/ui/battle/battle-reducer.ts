@@ -1,14 +1,18 @@
 import {BattleActionTypes, BattleViewActionTypes, BattleTypeKeys, BattleViewTypeKeys} from './battle-actions';
+import {unitsSelector} from "./battle-selectors";
 
 export interface WhereClause {
-    type: string
-    prop: keyof (UnitState | GroupState)
-    value: string | string[]
+    type: 'match'
+    prop: string
+    operator: string
+    value: undefined | string | string[]
 }
 
+export type PlayerQuerySelectTarget = 'unit' | 'card' |  'group' | 'none'
+
 export interface PlayerQuery {
-    from: 'unit' | 'group'
-    where: WhereClause[]
+    select: PlayerQuerySelectTarget
+    where?: WhereClause
 }
 
 export interface DiceState {
@@ -19,6 +23,9 @@ export interface DiceState {
 export interface CardState {
     id: string
     require: number
+    readyTime: number
+    cooldownTime: number
+    castTime: number
     target: 'self'
         | 'local-group'
         | 'remote-group'
@@ -38,6 +45,7 @@ export interface UnitState {
     id: string
     name: string
     baseHealth: number
+    damage: number
     rolls: number
     phase: BattlePhases
 }
@@ -68,7 +76,7 @@ export interface CardToUnitAssignment {
 }
 
 export interface BattleState {
-    query: PlayerQuery | undefined
+    query: PlayerQuery
     dices: DiceState[]
     cards: CardState[]
     groups: GroupState[]
@@ -83,18 +91,70 @@ export interface BattleState {
 export const INIT_ROLLS = 3
 
 export const INITIAL_STATE: BattleState = {
-    query: undefined,
+    query: {select: 'none', where: undefined},
     dices: [
         {id: 'dice1', face: 0},
         {id: 'dice2', face: 0},
         {id: 'dice3', face: 0},
-        {id: 'dice4', face: 0}
+        {id: 'dice4', face: 0},
+        {id: 'dice5', face: 0},
+        {id: 'dice6', face: 0},
+        {id: 'dice7', face: 0},
+        {id: 'dice8', face: 0},
+        {id: 'dice9', face: 0},
+        {id: 'dice10', face: 0},
+        {id: 'dice11', face: 0},
+        {id: 'dice12', face: 0}
     ],
     cards: [
-        {id: 'heal', require: 1, target: 'self'},
-        {id: 'maneuver', require: 3, target: 'self'},
-        {id: 'teleport', require: 5, target: 'self'},
-        {id: 'fireball', require: 6, target: 'remote-unit'}
+        {
+            id: 'heal',
+            require: 1,
+            target: 'self',
+            readyTime: 200,
+            cooldownTime: 2000,
+            castTime: 100
+        },
+        {
+            id: 'maneuver',
+            require: 3,
+            target: 'self',
+            readyTime: 1000,
+            cooldownTime: 500,
+            castTime: 300
+        },
+        {
+            id: 'teleport',
+            require: 5,
+            target: 'self',
+            readyTime: 2000,
+            cooldownTime: 5000,
+            castTime: 1000
+        },
+        {
+            id: 'fireball',
+            require: 6,
+            target: 'remote-unit',
+            readyTime: 200,
+            cooldownTime: 500,
+            castTime: 300
+        },
+        {
+            id: 'axe',
+            require: 6,
+            target: 'local-unit',
+            readyTime: 200,
+            cooldownTime: 300,
+            castTime: 100
+        },
+        {
+            id: 'arrow',
+            require: 6,
+            target: 'remote-unit',
+            readyTime: 100,
+            cooldownTime: 500,
+            castTime: 100
+        }
     ],
     groups: [
         {id: 'group1'},
@@ -102,9 +162,30 @@ export const INITIAL_STATE: BattleState = {
         {id: 'group3'}
     ],
     units: [
-        {id: 'unit1', name: 'Unit1', rolls: INIT_ROLLS, baseHealth: 10, phase:'rolling'},
-        {id: 'unit2', name: 'Unit2', rolls: INIT_ROLLS, baseHealth: 10, phase:'rolling'},
-        {id: 'unit3', name: 'Unit3', rolls: INIT_ROLLS, baseHealth: 10, phase:'rolling'}
+        {
+            id: 'unit1',
+            name: 'Unit1',
+            rolls: INIT_ROLLS,
+            baseHealth: 10,
+            damage: 0,
+            phase: 'rolling'
+        },
+        {
+            id: 'unit2',
+            name: 'Unit2',
+            rolls: INIT_ROLLS,
+            baseHealth: 10,
+            damage: 0,
+            phase: 'rolling'
+        },
+        {
+            id: 'unit3',
+            name: 'Unit3',
+            rolls: INIT_ROLLS,
+            baseHealth: 10,
+            damage: 0,
+            phase: 'rolling'
+        }
     ],
     diceToCardAssignments: [],
     diceToUnitAssignments: [
@@ -112,6 +193,10 @@ export const INITIAL_STATE: BattleState = {
         {diceId: 'dice2', unitId: 'unit1'},
         {diceId: 'dice3', unitId: 'unit1'},
         {diceId: 'dice4', unitId: 'unit1'},
+        {diceId: 'dice5', unitId: 'unit2'},
+        {diceId: 'dice6', unitId: 'unit2'},
+        {diceId: 'dice7', unitId: 'unit3'},
+        {diceId: 'dice8', unitId: 'unit3'}
     ],
     unitToGroupAssignments: [
         {unitId: 'unit1', groupId: 'group1'},
@@ -128,45 +213,68 @@ export const INITIAL_STATE: BattleState = {
         {cardId: 'teleport', unitId: 'unit1'},
         {cardId: 'fireball', unitId: 'unit1'},
         {cardId: 'maneuver', unitId: 'unit2'},
+        {cardId: 'arrow', unitId: 'unit2'},
         {cardId: 'maneuver', unitId: 'unit3'},
+        {cardId: 'axe', unitId: 'unit3'},
     ]
 }
 
 export function battleReducer(state: BattleState = INITIAL_STATE, action: BattleActionTypes): BattleState {
     switch (action.type) {
-        case BattleTypeKeys.ASSIGN_DICE_TO_CARD:
+        case BattleTypeKeys.ASSIGN_DICE_RESPONSE:
             return {
                 ...state,
-                diceToCardAssignments: [...state.diceToCardAssignments, {diceId: action.diceId, cardId: action.cardId}]
+                diceToCardAssignments: [...state.diceToCardAssignments.filter(a => a.diceId !== action.diceId).filter(a => a.cardId !== action.cardId), {
+                    diceId: action.diceId,
+                    cardId: action.cardId
+                }].filter(a => a.cardId !== 'none')
             }
-        case BattleTypeKeys.UNASSIGN_DICE_TO_CARD:
+        case BattleTypeKeys.ROLL_DICES_RESPONSE: {
             return {
                 ...state,
+                dices: state.dices.map(dice => action.dices.find(d => d.id === dice.id) || dice),
                 diceToCardAssignments: state.diceToCardAssignments
-                    .filter(assignment => assignment.diceId !== action.diceId && assignment.cardId !==action.cardId)
-            }
-        case BattleTypeKeys.ROLL_DICES_RESULT: {
-            //const newRolls = state.rolls - 1
-            return {
-                ...state,
-                //rolls: newRolls,
-                dices: action.dices,
-                diceToCardAssignments: state.cards.reduce((acc,card) => {
-                    const matchingDice = action.dices
-                        .filter(d => d.face === card.require)
-                        .filter(d => state.diceToCardAssignments.filter(a => a.diceId === d.id))[0]
-                    if(matchingDice){
-                        return [...acc, {diceId: matchingDice.id,cardId: card.id}]
-                    } else {
-                        return acc
+                    .filter(ass => action.dices.find(d => d.id === ass.diceId) === undefined)
+                    .concat(
+                        state.cards
+                            .filter((card) => state.cardToUnitAssignments.filter(ctu => ctu.unitId === action.unitId).find(ctu => ctu.cardId === card.id) !== undefined)
+                            .reduce((acc, card) => {
+                                const matchingDice = action.dices
+                                    .filter(d => d.face === card.require)
+                                    .filter(d => state.diceToCardAssignments.filter(a => a.diceId === d.id))[0]
+                                if (matchingDice) {
+                                    return [...acc, {diceId: matchingDice.id, cardId: card.id}]
+                                } else {
+                                    return acc
+                                }
+                            }, [])),
+                units: state.units.map((unit): UnitState => {
+                    if (unit.id === action.unitId) {
+                        const newRolls = unit.rolls - 1
+                        return {
+                            ...unit,
+                            rolls: newRolls,
+                            phase: newRolls === 0 ? 'playing-cards' : unit.phase
+
+                        }
                     }
-                },[])
+                    return unit
+                })
             }
         }
-        case BattleTypeKeys.KEEP_DICES:
+        case BattleTypeKeys.KEEP_DICES_RESPONSE:
             return {
                 ...state,
-                dices: state.dices.map(dice => ({...dice, selected: false}))
+                units : state.units.map((unit):UnitState => {
+                    if(unit.id === action.unitId){
+                        return {
+                            ...unit,
+                            phase: 'playing-cards',
+                            rolls: 0
+                        }
+                    }
+                    return unit
+                })
             }
         case BattleTypeKeys.ACCEPT_ASSIGNMENT:
             return {
@@ -175,6 +283,34 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
         case BattleTypeKeys.PLAYER_QUERY_REQUEST: {
             return {
                 ...state,
+                query: action.query
+            }
+        }
+        case BattleTypeKeys.DIRECT_DAMAGE_RESPONSE: {
+            const targetUnitState = unitsSelector(state).find(u => u.id === action.targetUnitId)
+            if(!targetUnitState) return state
+            if(targetUnitState.health - action.dmgAmount < 0){
+                return {
+                    ...state,
+                    units: state.units.filter(unit => unit.id !== action.targetUnitId),
+                    unitToGroupAssignments: state.unitToGroupAssignments.filter(utga => utga.unitId !== action.targetUnitId),
+                    unitToPlayerAssignments: state.unitToPlayerAssignments.filter(utpa => utpa.unitId !== action.targetUnitId),
+                    cardToUnitAssignments: state.cardToUnitAssignments.filter(ctua => ctua.unitId !== action.targetUnitId),
+                    diceToUnitAssignments: state.diceToUnitAssignments.filter(dtua => dtua.unitId !== action.targetUnitId)
+                }
+            } else {
+                return {
+                    ...state,
+                    units: state.units.map(unit => {
+                        if(unit.id === action.targetUnitId){
+                            return {
+                                ...unit,
+                                damage: action.dmgAmount
+                            }
+                        }
+                        return unit
+                    })
+                }
             }
         }
         default:
@@ -186,16 +322,17 @@ export interface BattleViewState {
     activeUnitId: string
 }
 
-export const BATTLE_VIEW_INITIAL_STATE:BattleViewState = {
+export const BATTLE_VIEW_INITIAL_STATE: BattleViewState = {
     activeUnitId: 'none'
 }
 
-export function battleViewReducer(state: BattleViewState = BATTLE_VIEW_INITIAL_STATE, action:BattleViewActionTypes ): BattleViewState {
-    switch (action.type){
-        case BattleViewTypeKeys.SET_ACTIVE_UNIT_ID: return {
-            ...state,
-            activeUnitId: action.unitId
-        }
+export function battleViewReducer(state: BattleViewState = BATTLE_VIEW_INITIAL_STATE, action: BattleViewActionTypes): BattleViewState {
+    switch (action.type) {
+        case BattleViewTypeKeys.SET_ACTIVE_UNIT_ID:
+            return {
+                ...state,
+                activeUnitId: action.unitId
+            }
         default:
             return state
     }

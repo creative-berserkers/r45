@@ -3,26 +3,17 @@ import { Provider } from 'react-redux'
 import * as React from 'react'
 import { render } from 'react-dom'
 import createSagaMiddleware from 'redux-saga'
-import {battleReducer, BattleState, battleViewReducer, BattleViewState} from '../ui/battle/battle-reducer'
 import rootSaga from '../ui/battle/battle-saga'
-//import { commandMiddleware } from './client-io'
-import {createStore, applyMiddleware, compose, combineReducers, Reducer} from 'redux'
+import {createStore, applyMiddleware, compose} from 'redux'
+import rootReducer, {RootState} from '../ui/main/root-reducer'
 
 injectTapEventPlugin()
 
-export interface RootState {
-    battle: BattleState,
-    battleView: BattleViewState
-}
 
-const rootReducer:Reducer<RootState> = combineReducers({
-    battle: battleReducer,
-    battleView: battleViewReducer
-})
 
 const sagaMiddleware = createSagaMiddleware()
-//const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
-const store = createStore(rootReducer, applyMiddleware(sagaMiddleware))
+const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
+const store = createStore(rootReducer, composeEnhancers(applyMiddleware(sagaMiddleware)))
 
 sagaMiddleware.run(rootSaga((state) => state.battle))
 

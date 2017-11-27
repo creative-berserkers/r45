@@ -6,6 +6,7 @@ export interface CardStateProps {
     selected?: boolean
     onClick?: () => void
     style?: React.CSSProperties
+    description?:string
 }
 
 export default class Dice extends React.Component<CardStateProps, {}> {
@@ -18,7 +19,7 @@ export default class Dice extends React.Component<CardStateProps, {}> {
 
     render() {
 
-        const {style,face, size = 80, selected} = this.props
+        const {style,face, size = 80, selected, description} = this.props
 
         const rootStyle: React.CSSProperties = {
             width: `${size}px`,
@@ -46,7 +47,15 @@ export default class Dice extends React.Component<CardStateProps, {}> {
             1+2+4+8+16+32
         ];
 
-        return <svg style={rootStyle} onClick={this.onClick} width='100%' height='100%' viewBox={`0 0 100 100`}>
+        return <svg
+            style={rootStyle}
+            onClick={this.onClick}
+            width='100%'
+            height='100%'
+            viewBox={`0 0 100 100`}
+        >
+            <g>
+                <title>{description}</title>
                 <rect x='1' y='1' rx='4' ry='4' width='98' height='98' stroke='gray' fill='lightgray' strokeWidth='2'/>
                 {(faceMapping[face] & 1) && <circle key={1} cx='25' cy='25' r='10' stroke='black' fill='white' strokeWidth='2'/>}
                 {(faceMapping[face] & 2) && <circle key={2} cx='25' cy='50' r='10' stroke='black' fill='white' strokeWidth='2'/>}
@@ -55,6 +64,7 @@ export default class Dice extends React.Component<CardStateProps, {}> {
                 {(faceMapping[face] & 16) && <circle key={5} cx='75' cy='50' r='10' stroke='black' fill='white' strokeWidth='2'/>}
                 {(faceMapping[face] & 32) && <circle key={6} cx='75' cy='75' r='10' stroke='black' fill='white' strokeWidth='2'/>}
                 {(faceMapping[face] & 64) && <circle key={7} cx='50' cy='50' r='10' stroke='black' fill='white' strokeWidth='2'/>}
-            </svg>
+            </g>
+        </svg>
     }
 }

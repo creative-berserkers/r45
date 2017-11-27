@@ -4,19 +4,19 @@ import {Dispatch} from 'redux'
 import Dice from '../common/Dice'
 import Drawer, {DrawerAction} from '../common/Drawer'
 import {Card} from '../common/Card'
-import {Unit} from '../common/Unit'
-import {GroupState, UnitState, BattleState, BattleViewState} from './battle-reducer'
+import {UnitComponent} from '../common/UnitComponent'
+import { BattleState, BattleViewState, PlayerQuery} from './battle-reducer'
 import {
     acceptAssignment,
-    assignDiceToCard,
-    keepDices,
-    unassignDiceFromCard,
-    cardPlay, playerIdAssigned, playerQueryResponse, setActiveUnitId, rollDicesRequest
+    keepDicesRequest,
+    cardPlayRequest, playerIdAssigned, setActiveUnitId, rollDicesRequest, assignDiceRequest,
+    unitSelectRequest
 } from './battle-actions'
 import {
-    cardDrawerActionsSelector, diceDrawerActionsSelector, groupsWithUnitsSelector, UICard, UIDice,
-    UIGroup, unitCardsSelector, unitDicesSelector
+    cardDrawerActionsSelector, diceDrawerActionsSelector, groupsWithUnitsSelector, ActiveUnitCard, ActiveUnitDice,
+    Group, unitCardsSelector, unitDicesSelector
 } from './battle-selectors'
+import {checkCondition} from "./battle-utils";
 
 const diceStyle = {
     margin: '2px'
@@ -31,24 +31,24 @@ const unitStyle = {
 }
 
 export interface BattleViewStateProps {
+    query: PlayerQuery,
     activeUnitId: string
     diceDrawerActions: DrawerAction[]
     cardDrawerActions: DrawerAction[]
-    groupsWithUnits: UIGroup[]
-    unitDices: UIDice[]
-    unitCards: UICard[]
+    groupsWithUnits: Group[]
+    unitDices: ActiveUnitDice[]
+    unitCards: ActiveUnitCard[]
 }
 
 export interface BattleViewDispatchProps {
     onActiveUnitSelected: (unitId: string) => void
     onPlayerIdAssigned: (playerId: string) => void
-    onAssignDiceToCard: (diceId: string, cardId: string) => void
-    onUnassignDiceFromCard: (diceId: string | undefined, cardId: string | undefined) => void
+    onAssignDiceRequest: (unitId:string, diceId: string) => void
     onRollDicesRequest: (unitId: string) => void
-    onKeepDices: () => void
+    onKeepDices: (unitId:string) => void
     onAcceptAssignment: () => void
-    onCardPlay: (cardId: string) => void
-    onPlayerQueryResponse: (value: any) => void
+    onCardSelected: (unitId:string,cardId: string) => void
+    onUnitSelected: (unitId:string,targetUnitId: string) => void
 }
 
 export interface BattleViewContainerProps {
@@ -69,45 +69,17 @@ export class BattleView extends React.Component<BattleViewProps, any> {
         this.props.onPlayerIdAssigned('player1')
     }
 
-    onDiceClick = (selectedDice: UIDice) => () => {
-        /*if (this.props.rolls === 0 || this.props.dices.every(dice => dice.face === 0)) {
-            return
-        }
-
-        const matchingAssignment = this.props.diceToCardAssignments.filter(assignment => assignment.diceId === selectedDice.id)[0]
-
-        if (matchingAssignment) {
-            this.props.onUnassignDiceFromCard(selectedDice.id, undefined)
-        } else {
-            const matchingCard = this.props.cards
-                .filter(card => card.require === selectedDice.face)
-                .filter(card => this.props.diceToCardAssignments.filter(assignment => assignment.cardId === card.id))[0]
-
-            if (matchingCard) {
-                this.props.onAssignDiceToCard(selectedDice.id, matchingCard.id)
-            } else {
-                this.props.onAssignDiceToCard(selectedDice.id, 'none')
-            }
-        }*/
+    onDiceClick = (selectedDice: ActiveUnitDice) => () => {
+        this.props.onAssignDiceRequest(this.props.activeUnitId, selectedDice.id)
     }
 
     onDiceAction = (action: DrawerAction) => {
         if (action.id === 'roll') {
             this.props.onRollDicesRequest(this.props.activeUnitId)
         }
-        /*if (action.id === 'roll') {
-            const newDices = this.props.dices.map(dice => {
-                if (this.props.diceToCardAssignments.filter(assignment => assignment.diceId === dice.id)[0] !== undefined) {
-                    return dice
-                }
-                return {...dice, face: getRandomArbitrary(1, 7)}
-            }).sort((a, b) => a.face - b.face)
-
-            this.props.onRollDicesResult(newDices)
-        }
         if (action.id === 'keep') {
-            this.props.onKeepDices()
-        }*/
+            this.props.onKeepDices(this.props.activeUnitId)
+        }
     }
 
     onCardSlotClick = (cardId: string, face: number) => {
@@ -135,15 +107,17 @@ export class BattleView extends React.Component<BattleViewProps, any> {
     }
 
     onCardClick = (cardId: string) => {
-        this.props.onCardPlay(cardId)
+        this.props.onCardSelected(this.props.activeUnitId,cardId)
     }
 
     onActiveUnitSelected = (unitId: string) => {
+        console.log('active unit selected')
         this.props.onActiveUnitSelected(unitId)
     }
 
     onUnitSelected = (unitId: string) => {
-        this.props.onPlayerQueryResponse(unitId)
+        console.log('unit selected')
+        this.props.onUnitSelected(this.props.activeUnitId,unitId)
     }
 
     render() {
@@ -162,16 +136,30 @@ export class BattleView extends React.Component<BattleViewProps, any> {
                 style={{backgroundColor: '#BDC3CF'}}
             >
                 {group.units
-                    .map(unit => <Unit
+                    .map(unit => <UnitComponent
                         key={unit.id}
-                        id={unit.id}
-                        name={unit.name}
-                        showSelectButton={unit.showSelectButton}
+                        unit={unit}
+                        debug={true}
+                        showSelectButton={checkCondition('unit', unit, this.props.query)}
                         onSelectButton={this.onUnitSelected}
                         onSelect={this.onActiveUnitSelected}
                         style={unitStyle}
                     />)}
             </Drawer>)}
+            {/*<Drawer
+                key='turn-drawer'
+                actions={[]}
+                onAction={()=>{}}
+                style={{backgroundColor: '#85929E'}}
+            >
+                {this.props.turns.map(turn => <Turn
+                    key={dice.id}
+                    face={dice.face}
+                    style={diceStyle}
+                    selected={dice.isSelected}
+                    onClick={this.onDiceClick(dice)}
+                />)}
+            </Drawer>*/}
             <Drawer
                 key='dice-drawer'
                 actions={this.props.diceDrawerActions}
@@ -184,6 +172,7 @@ export class BattleView extends React.Component<BattleViewProps, any> {
                     style={diceStyle}
                     selected={dice.isSelected}
                     onClick={this.onDiceClick(dice)}
+                    description={JSON.stringify(dice,null,2)}
                 />)}
             </Drawer>
             <Drawer
@@ -198,12 +187,12 @@ export class BattleView extends React.Component<BattleViewProps, any> {
                     name={card.id}
                     style={cardStyle}
                     diceSlot={card.require}
-                    diceSlotEmpty={card.isSlotEmpty}
+                    diceSlotEmpty={card.diceId === 'none'}
                     showSlot={true}
-                    showPlayButton={true}
+                    showPlayButton={checkCondition('card',card, this.props.query)}
                     onDiceSlotClick={this.onCardSlotClick}
                     onClick={this.onCardClick}
-                    description={'Spell that targets ' + card.target}/>)}
+                    description={JSON.stringify(card,null,2)}/>)}
             </Drawer>
         </div>
     }
@@ -213,13 +202,12 @@ const mapDispatchToProps = function (dispatch: Dispatch<any>): BattleViewDispatc
     return {
         onActiveUnitSelected: (unitId) => dispatch(setActiveUnitId(unitId)),
         onPlayerIdAssigned: (playerId) => dispatch(playerIdAssigned(playerId)),
-        onAssignDiceToCard: (diceId: string, cardId: string) => dispatch(assignDiceToCard(diceId, cardId)),
-        onUnassignDiceFromCard: (diceId: string | undefined, cardId: string | undefined) => dispatch(unassignDiceFromCard(diceId, cardId)),
+        onAssignDiceRequest: (unitId:string,diceId: string) => dispatch(assignDiceRequest(unitId,diceId)),
         onRollDicesRequest: (unitId: string) => dispatch(rollDicesRequest(unitId)),
-        onKeepDices: () => dispatch(keepDices()),
+        onKeepDices: (unitId) => dispatch(keepDicesRequest(unitId)),
         onAcceptAssignment: () => dispatch(acceptAssignment()),
-        onCardPlay: (cardId: string) => dispatch(cardPlay(cardId)),
-        onPlayerQueryResponse: (selection: UnitState | GroupState) => dispatch(playerQueryResponse(selection))
+        onCardSelected: (unitId,cardId: string) => dispatch(cardPlayRequest(unitId,cardId)),
+        onUnitSelected: (unitId,targetUnitId) => dispatch(unitSelectRequest(unitId, targetUnitId))
     }
 }
 
@@ -228,8 +216,10 @@ const mapStateToProps = function (state: any, ownProps: BattleViewContainerProps
     const battleViewState: BattleViewState = ownProps.battleViewStateSelector(state)
     const activeUnitId = battleViewState.activeUnitId
     return {
+        query: battleState.query,
         activeUnitId: activeUnitId,
         groupsWithUnits: groupsWithUnitsSelector(battleState, {activeUnitId}),
+        //turns: turnsSelector(battleState, {activeUnitId}),
         diceDrawerActions: diceDrawerActionsSelector(battleState, {activeUnitId}),
         cardDrawerActions: cardDrawerActionsSelector(battleState, {activeUnitId}),
         unitCards: unitCardsSelector(battleState, {activeUnitId}),

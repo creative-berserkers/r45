@@ -1,13 +1,15 @@
 import * as React from 'react'
-import Button from "./Button";
+import Button from './Button'
+import {Unit} from '../battle/battle-selectors';
 
 export interface UnitProps {
-    id: string
-    name: string
+    unit: Unit
+    debug?: boolean,
     showSelectButton?: boolean
     onSelect: (id: string) => void
     onSelectButton: (id: string) => void
     style?: React.CSSProperties
+    description?:string
 }
 
 const baseStyle: React.CSSProperties = {
@@ -24,24 +26,27 @@ const baseStyle: React.CSSProperties = {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
     gridTemplateRows: '50px auto',
-    gridTemplateAreas: '"name dices" "content content"'
+    gridTemplateAreas: '"name dices" "content content"',
+    width:'200px'
 }
 
-export const Unit = ({
-     id,
-     name,
-     showSelectButton = false,
-     style,
-     onSelectButton,
-     onSelect
- }: UnitProps) => <div style={{...baseStyle, ...style}} onClick={() => onSelect(id)}>
+export const UnitComponent = ({
+                         unit,
+                         debug = false,
+                         showSelectButton = false,
+                         style,
+                         onSelectButton,
+                         onSelect,
+                         description
+                     }: UnitProps) => <div style={{...baseStyle, ...style}} onClick={() => onSelect(unit.id)}>
     <div style={{padding: '16px'}}>
-        {name}
+        {unit.name}
     </div>
     <div>
         {showSelectButton && <Button style={{}}
                                      label={'Select'}
-                                     onClick={() => onSelectButton(id)}
+                                     onClick={() => onSelectButton(unit.id)}
         />}
     </div>
+    {debug && <ul>{Object.keys(unit).map((key:string) => (<li key={key}>{key}:{(unit as any)[key]}</li>))}</ul>}
 </div>
