@@ -1,21 +1,32 @@
 import {Action} from 'redux';
-import {DiceState, GroupState, PlayerQuery, UnitState} from "./battle-reducer";
+import {BattlePhases, DiceState, GroupState, PlayerQuery, UnitState} from './battle-reducer';
 
 export enum BattleTypeKeys {
+    REQUEST_ACTION = 'REQUEST_ACTION',
     PLAYER_ID_ASSIGNED = 'PLAYER_ID_ASSIGNED',
     ASSIGN_DICE_REQUEST = 'ASSIGN_DICE_REQUEST',
     ASSIGN_DICE_RESPONSE = 'ASSIGN_DICE_RESPONSE',
     ROLL_DICES_REQUEST = 'ROLL_DICES_REQUEST',
     ROLL_DICES_RESPONSE = 'ROLL_DICES_RESPONSE',
     KEEP_DICES_REQUEST = 'KEEP_DICES_REQUEST',
+    SET_UNIT_PHASE_RESPONSE = 'SET_UNIT_PHASE_RESPONSE',
     KEEP_DICES_RESPONSE = 'KEEP_DICES_RESPONSE',
     ACCEPT_ASSIGNMENT = 'ACCEPT_ASSIGNMENT',
     CARD_PLAY_REQUEST = 'CARD_PLAY_REQUEST',
-    PLAYER_QUERY_REQUEST = 'PLAYER_QUERY_REQUEST',
     PLAYER_QUERY_RESPONSE = 'PLAYER_QUERY_RESPONSE',
     UNIT_SELECT_REQUEST = 'UNIT_SELECT_REQUEST',
-    DIRECT_DAMAGE_RESPONSE = 'DIRECT_DAMAGE_RESPONSE',
+    DICE_SELECT_REQUEST = 'DICE_SELECT_REQUEST',
+    GROUP_SELECT_REQUEST = 'GROUP_SELECT_REQUEST',
+    DAMAGE_UNIT_RESPONSE = 'DAMAGE_UNIT_RESPONSE',
+    KILL_UNIT_RESPONSE = 'KILL_UNIT_RESPONSE',
+    MOVE_UNIT_TO_GROUP_RESPONSE = 'MOVE_UNIT_TO_GROUP_RESPONSE',
     OTHER_ACTION = '__any_other_action_type__'
+}
+
+export interface RequestAction<T extends Action> extends Action {
+    type: BattleTypeKeys.REQUEST_ACTION
+    action: T
+    unitId:string
 }
 
 export interface PlayerIdAssignedAction extends Action {
@@ -44,12 +55,16 @@ export interface RollDicesResponseAction extends Action {
 
 export interface RollDicesRequestAction extends Action {
     type: BattleTypeKeys.ROLL_DICES_REQUEST
+}
+
+export interface SetUnitPhaseResponseAction extends Action {
+    type: BattleTypeKeys.SET_UNIT_PHASE_RESPONSE
     unitId: string
+    phase:BattlePhases
 }
 
 export interface KeepDicesRequestAction extends Action {
     type: BattleTypeKeys.KEEP_DICES_REQUEST
-    unitId: string
 }
 
 export interface KeepDicesResponseAction extends Action {
@@ -67,14 +82,10 @@ export interface CardPlayRequestAction extends Action {
     cardId: string
 }
 
-export interface PlayerQueryRequestAction extends Action {
-    type: BattleTypeKeys.PLAYER_QUERY_REQUEST,
-    query: PlayerQuery
-}
-
 export interface PlayerQueryResponseAction extends Action {
-    type: BattleTypeKeys.PLAYER_QUERY_RESPONSE,
-    selection: UnitState | GroupState
+    type: BattleTypeKeys.PLAYER_QUERY_RESPONSE
+    query: PlayerQuery[]
+    unitId: string
 }
 
 export interface UnitSelectRequestAction extends Action {
@@ -83,14 +94,45 @@ export interface UnitSelectRequestAction extends Action {
     targetUnitId: string
 }
 
-export interface DirectDamageResponseAction extends Action {
-    type: BattleTypeKeys.DIRECT_DAMAGE_RESPONSE,
-    targetUnitId: string
+export interface DiceSelectRequestAction extends Action {
+    type: BattleTypeKeys.DICE_SELECT_REQUEST
+    unitId: string
+    diceId: string
+}
+
+export interface GroupSelectRequestAction extends Action {
+    type: BattleTypeKeys.GROUP_SELECT_REQUEST
+    unitId: string
+    targetGroupId: string
+}
+
+export interface DamageUnitResponseAction extends Action {
+    type: BattleTypeKeys.DAMAGE_UNIT_RESPONSE,
+    unitId: string
     dmgAmount: number
+}
+
+export interface KillUnitResponseAction extends Action {
+    type: BattleTypeKeys.KILL_UNIT_RESPONSE,
+    unitId: string
+}
+
+export interface MoveUnitToGroupResponseAction extends Action {
+    type: BattleTypeKeys.MOVE_UNIT_TO_GROUP_RESPONSE,
+    unitId: string
+    groupId: string
 }
 
 export interface OtherAction extends Action {
     type: BattleTypeKeys.OTHER_ACTION
+}
+
+export function request<T extends Action>(unitId:string, action: T): RequestAction<T> {
+    return {
+        type: BattleTypeKeys.REQUEST_ACTION,
+        action,
+        unitId
+    }
 }
 
 export function playerIdAssigned(playerId: string): PlayerIdAssignedAction {
@@ -117,10 +159,9 @@ export function assignDiceResponse(unitId: string, diceId: string, cardId: strin
     }
 }
 
-export function rollDicesRequest(unitId: string): RollDicesRequestAction {
+export function rollDicesRequest(): RollDicesRequestAction {
     return {
         type: BattleTypeKeys.ROLL_DICES_REQUEST,
-        unitId
     }
 }
 
@@ -132,10 +173,17 @@ export function rollDicesResponse(unitId: string, dices: DiceState[]): RollDices
     }
 }
 
-export function keepDicesRequest(unitId:string): KeepDicesRequestAction {
+export function setUnitPhaseResponse(unitId: string,phase:BattlePhases): SetUnitPhaseResponseAction{
     return {
-        type: BattleTypeKeys.KEEP_DICES_REQUEST,
-        unitId
+        type: BattleTypeKeys.SET_UNIT_PHASE_RESPONSE,
+        unitId,
+        phase
+    }
+}
+
+export function keepDicesRequest(): KeepDicesRequestAction {
+    return {
+        type: BattleTypeKeys.KEEP_DICES_REQUEST
     }
 }
 
@@ -160,17 +208,11 @@ export function cardPlayRequest(unitId:string, cardId: string): CardPlayRequestA
     }
 }
 
-export function playerQueryRequest(query: PlayerQuery): PlayerQueryRequestAction {
-    return {
-        type: BattleTypeKeys.PLAYER_QUERY_REQUEST,
-        query
-    }
-}
-
-export function playerQueryResponse(selection: UnitState | GroupState): PlayerQueryResponseAction {
+export function playerQueryResponse(unitId:string, query: PlayerQuery[]): PlayerQueryResponseAction {
     return {
         type: BattleTypeKeys.PLAYER_QUERY_RESPONSE,
-        selection
+        unitId,
+        query
     }
 }
 
@@ -182,21 +224,59 @@ export function unitSelectRequest(unitId:string, targetUnitId:string): UnitSelec
     }
 }
 
-export function directDamageResponse(targetUnitId:string, dmgAmount:number): DirectDamageResponseAction {
+export function diceSelectRequest(unitId:string, diceId:string): DiceSelectRequestAction {
     return {
-        type: BattleTypeKeys.DIRECT_DAMAGE_RESPONSE,
-        targetUnitId,
+        type: BattleTypeKeys.DICE_SELECT_REQUEST,
+        unitId,
+        diceId
+    }
+}
+
+export function groupSelectRequest(unitId:string, targetGroupId:string): GroupSelectRequestAction {
+    return {
+        type: BattleTypeKeys.GROUP_SELECT_REQUEST,
+        unitId,
+        targetGroupId
+    }
+}
+
+export function damageUnitResponse(unitId:string, dmgAmount:number): DamageUnitResponseAction {
+    return {
+        type: BattleTypeKeys.DAMAGE_UNIT_RESPONSE,
+        unitId,
         dmgAmount
     }
 }
 
+export function killUnitResponse(unitId:string): KillUnitResponseAction {
+    return {
+        type: BattleTypeKeys.KILL_UNIT_RESPONSE,
+        unitId
+    }
+}
+
+export function moveUnitToGroupResponse(unitId:string, groupId:string): MoveUnitToGroupResponseAction {
+    return {
+        type: BattleTypeKeys.MOVE_UNIT_TO_GROUP_RESPONSE,
+        unitId,
+        groupId
+    }
+}
+
+export type BattleActionRequestTypes = RollDicesRequestAction
+    | DiceSelectRequestAction
+    | KeepDicesRequestAction
+
 export type BattleActionTypes = AssignDiceRequestAction
     | RollDicesResponseAction
     | KeepDicesResponseAction
+    | SetUnitPhaseResponseAction
     | AcceptAssignmentAction
-    | PlayerQueryRequestAction
+    | PlayerQueryResponseAction
     | AssignDiceResponseAction
-    | DirectDamageResponseAction
+    | DamageUnitResponseAction
+    | KillUnitResponseAction
+    | MoveUnitToGroupResponseAction
     | OtherAction
 
 

@@ -27,8 +27,16 @@ const baseStyle: React.CSSProperties = {
     gridTemplateColumns: '1fr 1fr',
     gridTemplateRows: '50px auto',
     gridTemplateAreas: '"name dices" "content content"',
-    width:'200px'
+    width:'400px'
 }
+
+export const renderObject = (obj:any):any => <ul>
+    {Object.keys(obj)
+        .map((key:string) => (
+            <li key={key}>
+                {key}:{(typeof obj[key] === 'object') ? renderObject(obj[key]) : JSON.stringify(obj[key])}
+            </li>))}
+</ul>
 
 export const UnitComponent = ({
                          unit,
@@ -48,5 +56,7 @@ export const UnitComponent = ({
                                      onClick={() => onSelectButton(unit.id)}
         />}
     </div>
-    {debug && <ul>{Object.keys(unit).map((key:string) => (<li key={key}>{key}:{(unit as any)[key]}</li>))}</ul>}
+    <div>
+        {debug && renderObject(unit)}
+    </div>
 </div>

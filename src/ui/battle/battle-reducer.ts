@@ -1,14 +1,30 @@
 import {BattleActionTypes, BattleViewActionTypes, BattleTypeKeys, BattleViewTypeKeys} from './battle-actions';
-import {unitsSelector} from "./battle-selectors";
+
+export enum WhereClauseType {
+    MATCH_ALL = 'match-all',
+    MATCH_ANY = 'match-any'
+}
+
+export enum WhereClauseOperator {
+    EQUAL = '=',
+    NOT_EQUAL = '!='
+}
 
 export interface WhereClause {
-    type: 'match'
+    type: WhereClauseType
     prop: string
-    operator: string
+    operator: WhereClauseOperator
     value: undefined | string | string[]
 }
 
-export type PlayerQuerySelectTarget = 'unit' | 'card' |  'group' | 'none'
+export enum PlayerQuerySelectTarget {
+    UNIT = 'unit',
+    CARD = 'card',
+    GROUP = 'group',
+    DICE = 'dice',
+    DICE_ACTION = 'dice-action',
+    NONE = 'none'
+}
 
 export interface PlayerQuery {
     select: PlayerQuerySelectTarget
@@ -37,9 +53,12 @@ export interface GroupState {
     id: string
 }
 
-export type BattlePhases = 'rolling'
-    | 'assigning'
-    | 'playing-cards'
+export enum BattlePhases {
+    ROLLING = 'rolling',
+    REROLLING = 'rerolling',
+    WAITING_FOR_OTHERS = 'waiting-for-others',
+    PLAYING_CARDS = 'playing-cards'
+}
 
 export interface UnitState {
     id: string
@@ -48,6 +67,7 @@ export interface UnitState {
     damage: number
     rolls: number
     phase: BattlePhases
+    query: PlayerQuery[]
 }
 
 export interface DiceToCardAssignment {
@@ -76,7 +96,6 @@ export interface CardToUnitAssignment {
 }
 
 export interface BattleState {
-    query: PlayerQuery
     dices: DiceState[]
     cards: CardState[]
     groups: GroupState[]
@@ -91,7 +110,6 @@ export interface BattleState {
 export const INIT_ROLLS = 3
 
 export const INITIAL_STATE: BattleState = {
-    query: {select: 'none', where: undefined},
     dices: [
         {id: 'dice1', face: 0},
         {id: 'dice2', face: 0},
@@ -168,7 +186,16 @@ export const INITIAL_STATE: BattleState = {
             rolls: INIT_ROLLS,
             baseHealth: 10,
             damage: 0,
-            phase: 'rolling'
+            phase: BattlePhases.ROLLING,
+            query: [{
+                select: PlayerQuerySelectTarget.DICE_ACTION,
+                where: {
+                    type:WhereClauseType.MATCH_ALL,
+                    prop:'id',
+                    operator:WhereClauseOperator.EQUAL,
+                    value:'roll'
+                }
+            }]
         },
         {
             id: 'unit2',
@@ -176,7 +203,16 @@ export const INITIAL_STATE: BattleState = {
             rolls: INIT_ROLLS,
             baseHealth: 10,
             damage: 0,
-            phase: 'rolling'
+            phase: BattlePhases.ROLLING,
+            query: [{
+                select: PlayerQuerySelectTarget.DICE_ACTION,
+                where: {
+                    type:WhereClauseType.MATCH_ALL,
+                    prop:'id',
+                    operator:WhereClauseOperator.EQUAL,
+                    value:'roll'
+                }
+            }]
         },
         {
             id: 'unit3',
@@ -184,7 +220,16 @@ export const INITIAL_STATE: BattleState = {
             rolls: INIT_ROLLS,
             baseHealth: 10,
             damage: 0,
-            phase: 'rolling'
+            phase: BattlePhases.ROLLING,
+            query: [{
+                select: PlayerQuerySelectTarget.DICE_ACTION,
+                where: {
+                    type:WhereClauseType.MATCH_ALL,
+                    prop:'id',
+                    operator:WhereClauseOperator.EQUAL,
+                    value:'roll'
+                }
+            }]
         }
     ],
     diceToCardAssignments: [],
@@ -230,7 +275,7 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
                 }].filter(a => a.cardId !== 'none')
             }
         case BattleTypeKeys.ROLL_DICES_RESPONSE: {
-            return {
+            const newState = {
                 ...state,
                 dices: state.dices.map(dice => action.dices.find(d => d.id === dice.id) || dice),
                 diceToCardAssignments: state.diceToCardAssignments
@@ -254,23 +299,85 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
                         return {
                             ...unit,
                             rolls: newRolls,
-                            phase: newRolls === 0 ? 'playing-cards' : unit.phase
-
+                            phase: newRolls === 0 ? BattlePhases.WAITING_FOR_OTHERS : unit.phase === BattlePhases.ROLLING ? BattlePhases.REROLLING : unit.phase,
+                            query: newRolls === 0 ? [
+                                {select: PlayerQuerySelectTarget.NONE},
+                            ] : unit.phase === BattlePhases.ROLLING ? [
+                                {select: PlayerQuerySelectTarget.DICE},
+                                {select: PlayerQuerySelectTarget.DICE_ACTION, where:{ type:WhereClauseType.MATCH_ALL, prop:'id',operator:WhereClauseOperator.EQUAL, value:'roll' }},
+                                {select: PlayerQuerySelectTarget.DICE_ACTION, where:{ type:WhereClauseType.MATCH_ALL, prop:'id',operator:WhereClauseOperator.EQUAL, value:'keep' }}
+                            ] : unit.query
                         }
                     }
                     return unit
                 })
             }
+            const allPlayersPlaying = newState.units.every(unit => unit.phase === BattlePhases.WAITING_FOR_OTHERS)
+            if(allPlayersPlaying){
+                return {
+                    ...newState,
+                    units: newState.units.map((unit:UnitState) => ({
+                        ...unit,
+                        phase: BattlePhases.PLAYING_CARDS,
+                        query: [{
+                            select: PlayerQuerySelectTarget.CARD,
+                            where: {
+                                type: WhereClauseType.MATCH_ALL,
+                                prop: 'diceId',
+                                operator: WhereClauseOperator.NOT_EQUAL,
+                                value: 'none'
+                            }
+                        }]
+                    }))
+                }
+            }
+            return newState
         }
         case BattleTypeKeys.KEEP_DICES_RESPONSE:
+            const newState = {
+                ...state,
+                units : state.units.map((unit):UnitState => {
+                    if(unit.id === action.unitId){
+                        return {
+                            ...unit,
+                            phase: BattlePhases.WAITING_FOR_OTHERS,
+                            query:  [
+                                {select: PlayerQuerySelectTarget.NONE},
+                            ],
+                            rolls: 0
+                        }
+                    }
+                    return unit
+                })
+            }
+            const allPlayersPlaying = newState.units.every(unit => unit.phase === BattlePhases.WAITING_FOR_OTHERS)
+            if(allPlayersPlaying){
+                return {
+                    ...newState,
+                    units: newState.units.map((unit:UnitState) => ({
+                        ...unit,
+                        phase: BattlePhases.PLAYING_CARDS,
+                        query: [{
+                            select: PlayerQuerySelectTarget.CARD,
+                            where: {
+                                type: WhereClauseType.MATCH_ALL,
+                                prop: 'diceId',
+                                operator: WhereClauseOperator.NOT_EQUAL,
+                                value: 'none'
+                            }
+                        }]
+                    }))
+                }
+            }
+            return newState
+        case BattleTypeKeys.SET_UNIT_PHASE_RESPONSE:
             return {
                 ...state,
                 units : state.units.map((unit):UnitState => {
                     if(unit.id === action.unitId){
                         return {
                             ...unit,
-                            phase: 'playing-cards',
-                            rolls: 0
+                            phase: action.phase
                         }
                     }
                     return unit
@@ -280,37 +387,47 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
             return {
                 ...state,
             }
-        case BattleTypeKeys.PLAYER_QUERY_REQUEST: {
+        case BattleTypeKeys.PLAYER_QUERY_RESPONSE: {
             return {
                 ...state,
-                query: action.query
+                units: state.units.map(unit => {
+                    if(unit.id === action.unitId || action.unitId === 'all'){
+                        return {...unit, query:action.query}
+                    }
+                    return unit
+                })
             }
         }
-        case BattleTypeKeys.DIRECT_DAMAGE_RESPONSE: {
-            const targetUnitState = unitsSelector(state).find(u => u.id === action.targetUnitId)
-            if(!targetUnitState) return state
-            if(targetUnitState.health - action.dmgAmount < 0){
-                return {
-                    ...state,
-                    units: state.units.filter(unit => unit.id !== action.targetUnitId),
-                    unitToGroupAssignments: state.unitToGroupAssignments.filter(utga => utga.unitId !== action.targetUnitId),
-                    unitToPlayerAssignments: state.unitToPlayerAssignments.filter(utpa => utpa.unitId !== action.targetUnitId),
-                    cardToUnitAssignments: state.cardToUnitAssignments.filter(ctua => ctua.unitId !== action.targetUnitId),
-                    diceToUnitAssignments: state.diceToUnitAssignments.filter(dtua => dtua.unitId !== action.targetUnitId)
-                }
-            } else {
-                return {
-                    ...state,
-                    units: state.units.map(unit => {
-                        if(unit.id === action.targetUnitId){
-                            return {
-                                ...unit,
-                                damage: action.dmgAmount
-                            }
+        case BattleTypeKeys.DAMAGE_UNIT_RESPONSE: {
+            return {
+                ...state,
+                units: state.units.map(unit => {
+                    if(unit.id === action.unitId){
+                        return {
+                            ...unit,
+                            damage: action.dmgAmount
                         }
-                        return unit
-                    })
-                }
+                    }
+                    return unit
+                })
+            }
+        }
+        case BattleTypeKeys.KILL_UNIT_RESPONSE: {
+            return {
+                ...state,
+                units: state.units.filter(unit => unit.id !== action.unitId),
+                unitToGroupAssignments: state.unitToGroupAssignments.filter(utga => utga.unitId !== action.unitId),
+                unitToPlayerAssignments: state.unitToPlayerAssignments.filter(utpa => utpa.unitId !== action.unitId),
+                cardToUnitAssignments: state.cardToUnitAssignments.filter(ctua => ctua.unitId !== action.unitId),
+                diceToUnitAssignments: state.diceToUnitAssignments.filter(dtua => dtua.unitId !== action.unitId)
+            }
+        }
+        case BattleTypeKeys.MOVE_UNIT_TO_GROUP_RESPONSE: {
+            return {
+                ...state,
+                unitToGroupAssignments: state.unitToGroupAssignments
+                    .filter(utga => utga.unitId !== action.unitId)
+                    .concat({unitId:action.unitId,groupId:action.groupId})
             }
         }
         default:

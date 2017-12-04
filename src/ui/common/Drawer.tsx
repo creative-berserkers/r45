@@ -38,8 +38,8 @@ const buttonStyle: React.CSSProperties = {
 export interface DrawerAction {
     id: string
     name: string
-    disabled: boolean
-    visible: boolean
+    disabled?: boolean
+    visible?: boolean
 }
 
 export interface DrawerProps {

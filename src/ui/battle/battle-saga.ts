@@ -1,23 +1,22 @@
 import {take, call, put, takeEvery, takeLatest, select} from 'redux-saga/effects'
 import {
-    playerQueryRequest,
-    BattleTypeKeys, RollDicesRequestAction, rollDicesResponse, AssignDiceRequestAction, assignDiceResponse,
-    KeepDicesRequestAction, keepDicesResponse, CardPlayRequestAction, UnitSelectRequestAction, directDamageResponse
+    playerQueryResponse,
+    BattleTypeKeys, rollDicesResponse, AssignDiceRequestAction, assignDiceResponse,
+    KeepDicesRequestAction, keepDicesResponse, CardPlayRequestAction, UnitSelectRequestAction, damageUnitResponse,
+    killUnitResponse, GroupSelectRequestAction, moveUnitToGroupResponse, RequestAction, BattleActionTypes,
+    BattleActionRequestTypes, setUnitPhaseResponse
 } from './battle-actions'
-import {BattleState, CardState, DiceState, DiceToCardAssignment, PlayerQuery, UnitState} from './battle-reducer'
+import {BattlePhases, CardState, DiceState, DiceToCardAssignment, UnitState} from './battle-reducer'
 import {
-    activeUnitSelector, cardsSelector, dicesSelector, diceToCardAssignmentsSelector, ActiveUnitDice,
-    unitDicesSelector, BattleStateSelector
+    unitSelector, cardsSelector, dicesSelector, diceToCardAssignmentsSelector, ActiveUnitDice,
+    unitDicesSelector, BattleStateSelector, Unit, Group, unitGroupSelector
 } from './battle-selectors'
-import {getRandomArbitrary} from "./battle-utils";
-import {Action} from "redux"
+import {getRandomArbitrary} from './battle-utils';
 
-
-const rollDices = (stateSelector:BattleStateSelector) => function* (rollDicesRequest:RollDicesRequestAction){
-    const unitId = rollDicesRequest.unitId
-    const unit:UnitState = yield select((state:any) => activeUnitSelector(stateSelector(state),{activeUnitId: unitId}))
+const rollDices = (stateSelector:BattleStateSelector) => function* (unitId:string){
+    const unit:UnitState = yield select((state:any) => unitSelector(stateSelector(state),{unitId}))
     if(unit.rolls >= 1) {
-        const dices: ActiveUnitDice[] = yield select((state: any) => unitDicesSelector(stateSelector(state), {activeUnitId: unitId}), unitId)
+        const dices: ActiveUnitDice[] = yield select((state: any) => unitDicesSelector(stateSelector(state), {unitId}), unitId)
 
         const newDices: DiceState[] = dices.map(dice =>({
             id: dice.id,
@@ -29,27 +28,19 @@ const rollDices = (stateSelector:BattleStateSelector) => function* (rollDicesReq
     }
 }
 
-const keepDices = (stateSelector:BattleStateSelector) => function* (keepDicesRequestAction:KeepDicesRequestAction){
-    const unitId = keepDicesRequestAction.unitId
-    const unit:UnitState = yield select((state:any) => activeUnitSelector(stateSelector(state),{activeUnitId: unitId}))
-
-    if(unit.phase === 'rolling'){
-        yield put(keepDicesResponse(unitId))
-    }
+const keepDices = (stateSelector:BattleStateSelector) => function* (unitId:string){
+    yield put(keepDicesResponse(unitId))
 }
 
-const assignDice = (stateSelector:BattleStateSelector) => function* (assignDiceRequestAction:AssignDiceRequestAction) {
-    const unitId = assignDiceRequestAction.unitId
-    const unit: UnitState = yield select((state: any) => activeUnitSelector(stateSelector(state), {activeUnitId: unitId}))
-    const unitDices: ActiveUnitDice[] = yield select((state: any) => unitDicesSelector(stateSelector(state), {activeUnitId: unitId}))
-    const diceToCardAssignments:DiceToCardAssignment[] = yield select((state:any) => diceToCardAssignmentsSelector(stateSelector(state), {activeUnitId:unitId}))
-    const cards:CardState[] = yield select((state:any) => cardsSelector(stateSelector(state), {activeUnitId:unitId}))
-    const dices:DiceState[] = yield select((state:any) => dicesSelector(stateSelector(state), {activeUnitId:unitId}))
-    const selectedDice = dices.find(d => d.id === assignDiceRequestAction.diceId)
+const assignDice = (stateSelector:BattleStateSelector) => function* (unitId:string,diceId:string) {
+    const diceToCardAssignments:DiceToCardAssignment[] = yield select((state:any) => diceToCardAssignmentsSelector(stateSelector(state), {unitId}))
+    const cards:CardState[] = yield select((state:any) => cardsSelector(stateSelector(state), {unitId}))
+    const dices:DiceState[] = yield select((state:any) => dicesSelector(stateSelector(state), {unitId}))
+    const selectedDice = dices.find(d => d.id === diceId)
 
     if(!selectedDice) return
 
-    const matchingAssignment = diceToCardAssignments.filter(assignment => assignment.diceId === assignDiceRequestAction.diceId)[0]
+    const matchingAssignment = diceToCardAssignments.filter(assignment => assignment.diceId === diceId)[0]
 
     if (matchingAssignment) {
         yield put(assignDiceResponse(unitId, selectedDice.id, 'none'))
@@ -66,26 +57,66 @@ const assignDice = (stateSelector:BattleStateSelector) => function* (assignDiceR
     }
 }
 
+const handleRequest = (stateSelector:BattleStateSelector) => {
+    const handleRollDices = rollDices(stateSelector)
+    const handleKeepDices = keepDices(stateSelector)
+    const handleAssignDice = assignDice(stateSelector)
+
+    return function* ({unitId, action}:RequestAction<BattleActionRequestTypes>){
+        const unit:UnitState = yield select((state:any) => unitSelector(stateSelector(state),{unitId}))
+        switch (unit.phase){
+            case BattlePhases.ROLLING: {
+                if(action.type === BattleTypeKeys.ROLL_DICES_REQUEST) {
+                    yield* handleRollDices(unitId)
+                }
+            }
+            break
+            case BattlePhases.REROLLING: {
+                if(action.type === BattleTypeKeys.ROLL_DICES_REQUEST){
+                    yield *handleRollDices(unitId)
+                }
+                if(action.type === BattleTypeKeys.KEEP_DICES_REQUEST){
+                    yield *handleKeepDices(unitId)
+                }
+                if(action.type === BattleTypeKeys.DICE_SELECT_REQUEST){
+                    yield *handleAssignDice(unitId,action.diceId)
+                }
+            }
+            case BattlePhases.WAITING_FOR_OTHERS:
+            break
+            case BattlePhases.PLAYING_CARDS: {
+
+            }
+            break
+        }
+
+    }
+}
+
 const checkState = (stateSelector:BattleStateSelector) => function* () {
     const allPlayersPlaying = yield select((state:any) => stateSelector(state).units.every(unit => unit.phase === 'playing-cards'))
 
     if(allPlayersPlaying){
         console.log('all players playing')
         while(true) {
-            yield put(playerQueryRequest({
+            /*yield put(playerQueryResponse('all',[{
                 select: 'card',
                 where: {
-                    type: 'match',
+                    type: 'match-all',
                     prop: 'diceId',
                     operator: '!=',
                     value: 'none'
                 }
-            }))
+            }]))*/
             const cardPlayAction:CardPlayRequestAction = yield take(BattleTypeKeys.CARD_PLAY_REQUEST)
             console.log(`playing ${cardPlayAction.cardId}`)
             switch(cardPlayAction.cardId){
                 case 'fireball':{
                     yield playFireball(stateSelector,cardPlayAction.unitId)
+                    break
+                }
+                case 'maneuver':{
+                    yield playManeuver(stateSelector,cardPlayAction.unitId)
                     break
                 }
                 default: console.log(`${cardPlayAction.cardId} not found`)
@@ -98,23 +129,37 @@ const checkState = (stateSelector:BattleStateSelector) => function* () {
 }
 
 function* playFireball(stateSelector:BattleStateSelector, unitId:string) {
-    yield put(playerQueryRequest({
+    const dmgAmount = 6
+    /*yield put(playerQueryResponse(unitId,[{
         select: 'unit'
-    }))
+    }]))*/
     const {targetUnitId}:UnitSelectRequestAction = yield take(BattleTypeKeys.UNIT_SELECT_REQUEST)
-    yield put(directDamageResponse(targetUnitId,6))
-    console.log('shooting fireball at', targetUnitId)
+    const unit: Unit = yield select((state: any) => unitSelector(stateSelector(state), {unitId:targetUnitId}))
+
+    if(unit.health > dmgAmount) {
+        yield put(damageUnitResponse(targetUnitId, 6))
+    } else {
+        yield put(killUnitResponse(targetUnitId))
+    }
+}
+
+function* playManeuver(stateSelector:BattleStateSelector, unitId:string) {
+    /*yield put(playerQueryResponse(unitId,[{
+        select: 'group'
+    }]))*/
+    const {targetGroupId}:GroupSelectRequestAction = yield take(BattleTypeKeys.GROUP_SELECT_REQUEST)
+    const currentGroup: Group = yield select((state: any) => unitGroupSelector(stateSelector(state), {unitId}))
+
+    yield put(moveUnitToGroupResponse(unitId, targetGroupId))
 }
 
 export default (stateSelector:BattleStateSelector) => function* battleSaga() {
-    yield takeEvery(BattleTypeKeys.ROLL_DICES_REQUEST, rollDices(stateSelector))
-    yield takeEvery(BattleTypeKeys.KEEP_DICES_REQUEST, keepDices(stateSelector))
-    yield takeEvery(BattleTypeKeys.ASSIGN_DICE_REQUEST, assignDice(stateSelector))
+    yield takeEvery(BattleTypeKeys.REQUEST_ACTION, handleRequest(stateSelector))
 
-    const check = checkState(stateSelector)
+    /*const check = checkState(stateSelector)
 
     while (true) {
         yield take('*')
         yield check()
-    }
+    }*/
 }
