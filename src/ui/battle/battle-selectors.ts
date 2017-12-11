@@ -1,7 +1,6 @@
 import {createSelector} from 'reselect'
 import {
-    CardState, DiceState, DiceToCardAssignment, GroupState, INIT_ROLLS, PlayerQuery,
-    UnitToGroupAssignment,
+    CardState, DiceState, DiceToCardAssignment, PlayerQuery,
     CardToUnitAssignment, BattleState, DiceToUnitAssignment, PlayerQuerySelectTarget, GroupStateMap, CardStateMap,
     DiceStateMap,
 } from './battle-reducer'
@@ -51,11 +50,10 @@ export const activeUnitIdSelector = (state: BattleState, props: BattleSelectorPr
 export const cardsSelector = (state: BattleState, props: BattleSelectorProps) => state.cards
 export const groupsSelector = (state: BattleState, props: BattleSelectorProps) => state.groups
 export const unitsSelector = (state: BattleState, props?: BattleSelectorProps):Unit[] => Object.keys(state.units).map(unitId => {
-    const utga = state.unitToGroupAssignments.find(utga => utga.unitId === unitId)
     const unit = state.units[unitId]
     return {
         id: unit.id,
-        groupId: (utga && utga.groupId) || 'none',
+        groupId: unit.groupId,
         health: unit.baseHealth - unit.damage,
         name: unit.name,
         phase: unit.phase,
@@ -67,7 +65,6 @@ export const dicesSelector = (state: BattleState, props: BattleSelectorProps) =>
 export const diceToCardAssignmentsSelector = (state: BattleState, props: BattleSelectorProps) => state.diceToCardAssignments
 export const cardToUnitAssignmentsSelector = (state: BattleState, props: BattleSelectorProps) => state.cardToUnitAssignments
 export const diceToUnitAssignmentsSelector = (state: BattleState, props: BattleSelectorProps) => state.diceToUnitAssignments
-export const unitToGroupAssignmentsSelector = (state: BattleState, props: BattleSelectorProps) => state.unitToGroupAssignments
 
 
 export const unitSelector = createSelector<BattleState,BattleSelectorProps,string,Unit[],Unit|undefined>(
@@ -111,21 +108,12 @@ export const cardDrawerActionsSelector = createSelector<BattleState, BattleSelec
     ] : []
 )
 
-export const groupsWithUnitsSelector = createSelector<BattleState, BattleSelectorProps, GroupStateMap, Unit[], UnitToGroupAssignment[], Group[]>(
+export const groupsWithUnitsSelector = createSelector<BattleState, BattleSelectorProps, GroupStateMap, Unit[], Group[]>(
     groupsSelector,
     unitsSelector,
-    unitToGroupAssignmentsSelector,
-    (groupMap, units, unitToGroupAssignments): Group[] => Object.keys(groupMap).map(groupId => ({
+    (groupMap, units): Group[] => Object.keys(groupMap).map(groupId => ({
         id: groupId,
-        units: unitToGroupAssignments
-            .filter(utga => utga.groupId === groupId)
-            .reduce((acc: Unit[], utga: UnitToGroupAssignment): Unit[] => {
-                const unit = units.find(unit => unit.id === utga.unitId)
-                if (unit) {
-                    acc.push(unit)
-                }
-                return acc
-            }, [])
+        units: units.filter(unit => unit.groupId === groupId)
     }))
 )
 

@@ -74,6 +74,7 @@ export enum BattlePhases {
 export interface UnitState {
     id: string
     name: string
+    groupId: string
     baseHealth: number
     damage: number
     rolls: number
@@ -95,11 +96,6 @@ export interface DiceToUnitAssignment {
     unitId: string
 }
 
-export interface UnitToGroupAssignment {
-    unitId: string
-    groupId: string
-}
-
 export interface UnitToPlayerAssignment {
     unitId: string
     playerId: string
@@ -117,7 +113,6 @@ export interface BattleState {
     units: UnitStateMap
     diceToCardAssignments: DiceToCardAssignment[]
     diceToUnitAssignments: DiceToUnitAssignment[]
-    unitToGroupAssignments: UnitToGroupAssignment[]
     unitToPlayerAssignments: UnitToPlayerAssignment[]
     cardToUnitAssignments: CardToUnitAssignment[]
 }
@@ -186,6 +181,7 @@ export const INITIAL_STATE: BattleState = {
         {
             id: 'unit1',
             name: 'Unit1',
+            groupId: 'group1',
             rolls: INIT_ROLLS,
             baseHealth: 10,
             damage: 0,
@@ -203,6 +199,7 @@ export const INITIAL_STATE: BattleState = {
         {
             id: 'unit2',
             name: 'Unit2',
+            groupId: 'group3',
             rolls: INIT_ROLLS,
             baseHealth: 10,
             damage: 0,
@@ -220,6 +217,7 @@ export const INITIAL_STATE: BattleState = {
         {
             id: 'unit3',
             name: 'Unit3',
+            groupId: 'group3',
             rolls: INIT_ROLLS,
             baseHealth: 10,
             damage: 0,
@@ -245,11 +243,6 @@ export const INITIAL_STATE: BattleState = {
         {diceId: 'dice6', unitId: 'unit2'},
         {diceId: 'dice7', unitId: 'unit3'},
         {diceId: 'dice8', unitId: 'unit3'}
-    ],
-    unitToGroupAssignments: [
-        {unitId: 'unit1', groupId: 'group1'},
-        {unitId: 'unit2', groupId: 'group3'},
-        {unitId: 'unit3', groupId: 'group3'}
     ],
     unitToPlayerAssignments: [
         {unitId: 'unit1', playerId: 'player1'},
@@ -414,7 +407,6 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
             return {
                 ...state,
                 units: rest,
-                unitToGroupAssignments: state.unitToGroupAssignments.filter(utga => utga.unitId !== action.unitId),
                 unitToPlayerAssignments: state.unitToPlayerAssignments.filter(utpa => utpa.unitId !== action.unitId),
                 cardToUnitAssignments: state.cardToUnitAssignments.filter(ctua => ctua.unitId !== action.unitId),
                 diceToUnitAssignments: state.diceToUnitAssignments.filter(dtua => dtua.unitId !== action.unitId)
@@ -423,9 +415,13 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
         case BattleTypeKeys.MOVE_UNIT_TO_GROUP_RESPONSE: {
             return {
                 ...state,
-                unitToGroupAssignments: state.unitToGroupAssignments
-                    .filter(utga => utga.unitId !== action.unitId)
-                    .concat({unitId:action.unitId,groupId:action.groupId})
+                units : {
+                    ...state.units,
+                    [action.unitId] : {
+                        ...state.units[action.unitId],
+                        groupId: action.groupId
+                    }
+                }
             }
         }
         default:
