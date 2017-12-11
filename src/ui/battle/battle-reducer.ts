@@ -75,6 +75,7 @@ export interface UnitState {
     id: string
     name: string
     groupId: string
+    playerId: string
     baseHealth: number
     damage: number
     rolls: number
@@ -96,11 +97,6 @@ export interface DiceToUnitAssignment {
     unitId: string
 }
 
-export interface UnitToPlayerAssignment {
-    unitId: string
-    playerId: string
-}
-
 export interface CardToUnitAssignment {
     cardId: string
     unitId: string
@@ -113,7 +109,6 @@ export interface BattleState {
     units: UnitStateMap
     diceToCardAssignments: DiceToCardAssignment[]
     diceToUnitAssignments: DiceToUnitAssignment[]
-    unitToPlayerAssignments: UnitToPlayerAssignment[]
     cardToUnitAssignments: CardToUnitAssignment[]
 }
 
@@ -182,6 +177,7 @@ export const INITIAL_STATE: BattleState = {
             id: 'unit1',
             name: 'Unit1',
             groupId: 'group1',
+            playerId: 'player1',
             rolls: INIT_ROLLS,
             baseHealth: 10,
             damage: 0,
@@ -200,6 +196,7 @@ export const INITIAL_STATE: BattleState = {
             id: 'unit2',
             name: 'Unit2',
             groupId: 'group3',
+            playerId: 'player1',
             rolls: INIT_ROLLS,
             baseHealth: 10,
             damage: 0,
@@ -218,6 +215,7 @@ export const INITIAL_STATE: BattleState = {
             id: 'unit3',
             name: 'Unit3',
             groupId: 'group3',
+            playerId: 'player1',
             rolls: INIT_ROLLS,
             baseHealth: 10,
             damage: 0,
@@ -243,10 +241,6 @@ export const INITIAL_STATE: BattleState = {
         {diceId: 'dice6', unitId: 'unit2'},
         {diceId: 'dice7', unitId: 'unit3'},
         {diceId: 'dice8', unitId: 'unit3'}
-    ],
-    unitToPlayerAssignments: [
-        {unitId: 'unit1', playerId: 'player1'},
-        {unitId: 'unit2', playerId: 'player1'}
     ],
     cardToUnitAssignments: [
         {cardId: 'heal', unitId: 'unit1'},
@@ -407,7 +401,6 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
             return {
                 ...state,
                 units: rest,
-                unitToPlayerAssignments: state.unitToPlayerAssignments.filter(utpa => utpa.unitId !== action.unitId),
                 cardToUnitAssignments: state.cardToUnitAssignments.filter(ctua => ctua.unitId !== action.unitId),
                 diceToUnitAssignments: state.diceToUnitAssignments.filter(dtua => dtua.unitId !== action.unitId)
             }
