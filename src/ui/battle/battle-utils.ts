@@ -19,3 +19,14 @@ export function checkCondition(target: PlayerQuerySelectTarget,obj:any, queries:
         return false
     }, false)
 }
+
+
+export type IdElement = {id:string}
+export interface IdMap<T> {[key:string]:T}
+
+export function toIdMap<T extends IdElement>(elements:T[]): IdMap<T> {
+    return elements.reduce((acc:IdMap<T>,element:T) => {
+        acc[element.id] = element
+        return acc
+    },{})
+}

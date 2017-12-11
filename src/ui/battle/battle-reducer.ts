@@ -1,4 +1,5 @@
 import {BattleActionTypes, BattleViewActionTypes, BattleTypeKeys, BattleViewTypeKeys} from './battle-actions';
+import {toIdMap} from "./battle-utils";
 
 export enum WhereClauseType {
     MATCH_ALL = 'match-all',
@@ -36,12 +37,14 @@ export interface DiceState {
     face: 0 | 1 | 2 | 3 | 4 | 5 | 6
 }
 
+export interface DiceStateMap {
+    [key:string]: DiceState
+}
+
 export interface CardState {
     id: string
     require: number
-    readyTime: number
-    cooldownTime: number
-    castTime: number
+    initiative: number
     target: 'self'
         | 'local-group'
         | 'remote-group'
@@ -49,8 +52,16 @@ export interface CardState {
         | 'remote-unit'
 }
 
+export interface CardStateMap {
+    [key:string]: CardState
+}
+
 export interface GroupState {
     id: string
+}
+
+export interface GroupStateMap {
+    [key:string] : GroupState
 }
 
 export enum BattlePhases {
@@ -68,6 +79,10 @@ export interface UnitState {
     rolls: number
     phase: BattlePhases
     query: PlayerQuery[]
+}
+
+export interface UnitStateMap {
+    [key:string]: UnitState
 }
 
 export interface DiceToCardAssignment {
@@ -96,10 +111,10 @@ export interface CardToUnitAssignment {
 }
 
 export interface BattleState {
-    dices: DiceState[]
-    cards: CardState[]
-    groups: GroupState[]
-    units: UnitState[]
+    dices: DiceStateMap
+    cards: CardStateMap
+    groups: GroupStateMap
+    units: UnitStateMap
     diceToCardAssignments: DiceToCardAssignment[]
     diceToUnitAssignments: DiceToUnitAssignment[]
     unitToGroupAssignments: UnitToGroupAssignment[]
@@ -110,7 +125,7 @@ export interface BattleState {
 export const INIT_ROLLS = 3
 
 export const INITIAL_STATE: BattleState = {
-    dices: [
+    dices: toIdMap<DiceState>([
         {id: 'dice1', face: 0},
         {id: 'dice2', face: 0},
         {id: 'dice3', face: 0},
@@ -123,63 +138,51 @@ export const INITIAL_STATE: BattleState = {
         {id: 'dice10', face: 0},
         {id: 'dice11', face: 0},
         {id: 'dice12', face: 0}
-    ],
-    cards: [
+    ]),
+    cards: toIdMap<CardState>([
         {
             id: 'heal',
             require: 1,
             target: 'self',
-            readyTime: 200,
-            cooldownTime: 2000,
-            castTime: 100
+            initiative: 20
         },
         {
             id: 'maneuver',
             require: 3,
             target: 'self',
-            readyTime: 1000,
-            cooldownTime: 500,
-            castTime: 300
+            initiative: 30
         },
         {
             id: 'teleport',
             require: 5,
             target: 'self',
-            readyTime: 2000,
-            cooldownTime: 5000,
-            castTime: 1000
+            initiative: 80
         },
         {
             id: 'fireball',
             require: 6,
             target: 'remote-unit',
-            readyTime: 200,
-            cooldownTime: 500,
-            castTime: 300
+            initiative: 60
         },
         {
             id: 'axe',
             require: 6,
             target: 'local-unit',
-            readyTime: 200,
-            cooldownTime: 300,
-            castTime: 100
+            initiative:50
         },
         {
             id: 'arrow',
             require: 6,
             target: 'remote-unit',
-            readyTime: 100,
-            cooldownTime: 500,
-            castTime: 100
+            initiative: 70
         }
-    ],
-    groups: [
+    ]),
+    groups: toIdMap<GroupState>([
         {id: 'group1'},
         {id: 'group2'},
         {id: 'group3'}
-    ],
-    units: [
+    ]),
+    units: toIdMap<UnitState>([
         {
             id: 'unit1',
             name: 'Unit1',
@@ -231,7 +234,7 @@ export const INITIAL_STATE: BattleState = {
                 }
             }]
         }
-    ],
+    ]),
     diceToCardAssignments: [],
     diceToUnitAssignments: [
         {diceId: 'dice1', unitId: 'unit1'},
@@ -275,49 +278,48 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
                 }].filter(a => a.cardId !== 'none')
             }
         case BattleTypeKeys.ROLL_DICES_RESPONSE: {
+            const responseUnit = state.units[action.unitId]
+            const newRolls = responseUnit.rolls - 1
             const newState = {
                 ...state,
-                dices: state.dices.map(dice => action.dices.find(d => d.id === dice.id) || dice),
+                dices: {...state.dices,...toIdMap(action.dices)},
                 diceToCardAssignments: state.diceToCardAssignments
                     .filter(ass => action.dices.find(d => d.id === ass.diceId) === undefined)
                     .concat(
-                        state.cards
-                            .filter((card) => state.cardToUnitAssignments.filter(ctu => ctu.unitId === action.unitId).find(ctu => ctu.cardId === card.id) !== undefined)
-                            .reduce((acc, card) => {
+                        Object.keys(state.cards)
+                            .filter((cardId) => state.cardToUnitAssignments.filter(ctu => ctu.unitId === action.unitId).find(ctu => ctu.cardId === cardId) !== undefined)
+                            .reduce((acc, cardId) => {
                                 const matchingDice = action.dices
-                                    .filter(d => d.face === card.require)
+                                    .filter(d => d.face === state.cards[cardId].require)
                                     .filter(d => state.diceToCardAssignments.filter(a => a.diceId === d.id))[0]
                                 if (matchingDice) {
-                                    return [...acc, {diceId: matchingDice.id, cardId: card.id}]
+                                    return [...acc, {diceId: matchingDice.id, cardId: cardId}]
                                 } else {
                                     return acc
                                 }
                             }, [])),
-                units: state.units.map((unit): UnitState => {
-                    if (unit.id === action.unitId) {
-                        const newRolls = unit.rolls - 1
-                        return {
-                            ...unit,
-                            rolls: newRolls,
-                            phase: newRolls === 0 ? BattlePhases.WAITING_FOR_OTHERS : unit.phase === BattlePhases.ROLLING ? BattlePhases.REROLLING : unit.phase,
-                            query: newRolls === 0 ? [
-                                {select: PlayerQuerySelectTarget.NONE},
-                            ] : unit.phase === BattlePhases.ROLLING ? [
-                                {select: PlayerQuerySelectTarget.DICE},
-                                {select: PlayerQuerySelectTarget.DICE_ACTION, where:{ type:WhereClauseType.MATCH_ALL, prop:'id',operator:WhereClauseOperator.EQUAL, value:'roll' }},
-                                {select: PlayerQuerySelectTarget.DICE_ACTION, where:{ type:WhereClauseType.MATCH_ALL, prop:'id',operator:WhereClauseOperator.EQUAL, value:'keep' }}
-                            ] : unit.query
-                        }
+                units: {
+                    ...state.units,
+                    [action.unitId] : {
+                        ...responseUnit,
+                        rolls: newRolls,
+                        phase: newRolls === 0 ? BattlePhases.WAITING_FOR_OTHERS : responseUnit.phase === BattlePhases.ROLLING ? BattlePhases.REROLLING : responseUnit.phase,
+                        query: newRolls === 0 ? [
+                            {select: PlayerQuerySelectTarget.NONE},
+                        ] : responseUnit.phase === BattlePhases.ROLLING ? [
+                            {select: PlayerQuerySelectTarget.DICE},
+                            {select: PlayerQuerySelectTarget.DICE_ACTION, where:{ type:WhereClauseType.MATCH_ALL, prop:'id',operator:WhereClauseOperator.EQUAL, value:'roll' }},
+                            {select: PlayerQuerySelectTarget.DICE_ACTION, where:{ type:WhereClauseType.MATCH_ALL, prop:'id',operator:WhereClauseOperator.EQUAL, value:'keep' }}
+                        ] : responseUnit.query
                     }
-                    return unit
-                })
+                }
             }
-            const allPlayersPlaying = newState.units.every(unit => unit.phase === BattlePhases.WAITING_FOR_OTHERS)
+            const allPlayersPlaying = Object.keys(newState.units).every(unitId => newState.units[unitId].phase === BattlePhases.WAITING_FOR_OTHERS)
             if(allPlayersPlaying){
                 return {
                     ...newState,
-                    units: newState.units.map((unit:UnitState) => ({
-                        ...unit,
+                    units: toIdMap<UnitState>(Object.keys(newState.units).map((unitId) => ({
+                        ...newState.units[unitId],
                         phase: BattlePhases.PLAYING_CARDS,
                         query: [{
                             select: PlayerQuerySelectTarget.CARD,
@@ -328,34 +330,33 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
                                 value: 'none'
                             }
                         }]
-                    }))
+                    })))
                 }
             }
             return newState
         }
         case BattleTypeKeys.KEEP_DICES_RESPONSE:
+            const responseUnit = state.units[action.unitId]
             const newState = {
                 ...state,
-                units : state.units.map((unit):UnitState => {
-                    if(unit.id === action.unitId){
-                        return {
-                            ...unit,
-                            phase: BattlePhases.WAITING_FOR_OTHERS,
-                            query:  [
-                                {select: PlayerQuerySelectTarget.NONE},
-                            ],
-                            rolls: 0
-                        }
+                units : {
+                    ...state.units,
+                    [responseUnit.id]:{
+                        ...responseUnit,
+                        phase: BattlePhases.WAITING_FOR_OTHERS,
+                        query:  [
+                            {select: PlayerQuerySelectTarget.NONE},
+                        ],
+                        rolls: 0
                     }
-                    return unit
-                })
+                }
             }
-            const allPlayersPlaying = newState.units.every(unit => unit.phase === BattlePhases.WAITING_FOR_OTHERS)
+            const allPlayersPlaying = Object.keys(newState.units).every(unitId => newState.units[unitId].phase === BattlePhases.WAITING_FOR_OTHERS)
             if(allPlayersPlaying){
                 return {
                     ...newState,
-                    units: newState.units.map((unit:UnitState) => ({
-                        ...unit,
+                    units: toIdMap<UnitState>(Object.keys(newState.units).map((unitId) => ({
+                        ...newState.units[unitId],
                         phase: BattlePhases.PLAYING_CARDS,
                         query: [{
                             select: PlayerQuerySelectTarget.CARD,
@@ -366,22 +367,19 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
                                 value: 'none'
                             }
                         }]
-                    }))
+                    })))
                 }
             }
             return newState
         case BattleTypeKeys.SET_UNIT_PHASE_RESPONSE:
             return {
                 ...state,
-                units : state.units.map((unit):UnitState => {
-                    if(unit.id === action.unitId){
-                        return {
-                            ...unit,
-                            phase: action.phase
-                        }
+                units : {...state.units,
+                    [action.unitId] : {
+                        ...state.units[action.unitId],
+                        phase: action.phase
                     }
-                    return unit
-                })
+                }
             }
         case BattleTypeKeys.ACCEPT_ASSIGNMENT:
             return {
@@ -390,32 +388,32 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
         case BattleTypeKeys.PLAYER_QUERY_RESPONSE: {
             return {
                 ...state,
-                units: state.units.map(unit => {
-                    if(unit.id === action.unitId || action.unitId === 'all'){
-                        return {...unit, query:action.query}
+                units: {
+                    ...state.units,
+                    [action.unitId]: {
+                        ...state.units[action.unitId],
+                        query:action.query
                     }
-                    return unit
-                })
+                }
             }
         }
         case BattleTypeKeys.DAMAGE_UNIT_RESPONSE: {
             return {
                 ...state,
-                units: state.units.map(unit => {
-                    if(unit.id === action.unitId){
-                        return {
-                            ...unit,
-                            damage: action.dmgAmount
-                        }
+                units: {...state.units,
+                    [action.unitId]:{
+                        ...state.units[action.unitId],
+                        damage: action.dmgAmount
                     }
-                    return unit
-                })
+                }
             }
         }
         case BattleTypeKeys.KILL_UNIT_RESPONSE: {
+            // noinspection JSUnusedLocalSymbols
+            const {[action.unitId]:omit,...rest} = state.units
             return {
                 ...state,
-                units: state.units.filter(unit => unit.id !== action.unitId),
+                units: rest,
                 unitToGroupAssignments: state.unitToGroupAssignments.filter(utga => utga.unitId !== action.unitId),
                 unitToPlayerAssignments: state.unitToPlayerAssignments.filter(utpa => utpa.unitId !== action.unitId),
                 cardToUnitAssignments: state.cardToUnitAssignments.filter(ctua => ctua.unitId !== action.unitId),

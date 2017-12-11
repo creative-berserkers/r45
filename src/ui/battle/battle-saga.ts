@@ -94,7 +94,7 @@ const handleRequest = (stateSelector:BattleStateSelector) => {
 }
 
 const checkState = (stateSelector:BattleStateSelector) => function* () {
-    const allPlayersPlaying = yield select((state:any) => stateSelector(state).units.every(unit => unit.phase === 'playing-cards'))
+    const allPlayersPlaying = yield select((state:any) => Object.keys(stateSelector(state).units).every(unitId => stateSelector(state).units[unitId].phase === 'playing-cards'))
 
     if(allPlayersPlaying){
         console.log('all players playing')

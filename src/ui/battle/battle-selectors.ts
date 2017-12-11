@@ -2,7 +2,8 @@ import {createSelector} from 'reselect'
 import {
     CardState, DiceState, DiceToCardAssignment, GroupState, INIT_ROLLS, PlayerQuery,
     UnitToGroupAssignment,
-    CardToUnitAssignment, BattleState, DiceToUnitAssignment, PlayerQuerySelectTarget,
+    CardToUnitAssignment, BattleState, DiceToUnitAssignment, PlayerQuerySelectTarget, GroupStateMap, CardStateMap,
+    DiceStateMap,
 } from './battle-reducer'
 import {DrawerAction} from '../common/Drawer';
 import {checkCondition} from "./battle-utils";
@@ -39,13 +40,19 @@ export interface ActiveUnitCard {
     diceId: string
 }
 
+export interface Turn {
+    unitId: string
+    cardId: string
+}
+
 export type BattleStateSelector = (state:any) => BattleState
 
 export const activeUnitIdSelector = (state: BattleState, props: BattleSelectorProps) => props.unitId
 export const cardsSelector = (state: BattleState, props: BattleSelectorProps) => state.cards
 export const groupsSelector = (state: BattleState, props: BattleSelectorProps) => state.groups
-export const unitsSelector = (state: BattleState, props?: BattleSelectorProps):Unit[] => state.units.map(unit => {
-    const utga = state.unitToGroupAssignments.find(utga => utga.unitId === unit.id)
+export const unitsSelector = (state: BattleState, props?: BattleSelectorProps):Unit[] => Object.keys(state.units).map(unitId => {
+    const utga = state.unitToGroupAssignments.find(utga => utga.unitId === unitId)
+    const unit = state.units[unitId]
     return {
         id: unit.id,
         groupId: (utga && utga.groupId) || 'none',
@@ -104,14 +111,14 @@ export const cardDrawerActionsSelector = createSelector<BattleState, BattleSelec
     ] : []
 )
 
-export const groupsWithUnitsSelector = createSelector<BattleState, BattleSelectorProps, GroupState[], Unit[], UnitToGroupAssignment[], Group[]>(
+export const groupsWithUnitsSelector = createSelector<BattleState, BattleSelectorProps, GroupStateMap, Unit[], UnitToGroupAssignment[], Group[]>(
     groupsSelector,
     unitsSelector,
     unitToGroupAssignmentsSelector,
-    (groups, units, unitToGroupAssignments): Group[] => groups.map(group => ({
-        id: group.id,
+    (groupMap, units, unitToGroupAssignments): Group[] => Object.keys(groupMap).map(groupId => ({
+        id: groupId,
         units: unitToGroupAssignments
-            .filter(utga => utga.groupId === group.id)
+            .filter(utga => utga.groupId === groupId)
             .reduce((acc: Unit[], utga: UnitToGroupAssignment): Unit[] => {
                 const unit = units.find(unit => unit.id === utga.unitId)
                 if (unit) {
@@ -130,16 +137,16 @@ export const unitGroupSelector = createSelector<BattleState,BattleSelectorProps,
     }
 )
 
-export const unitDicesSelector = createSelector<BattleState, BattleSelectorProps, string, DiceState[], DiceToUnitAssignment[], DiceToCardAssignment[], ActiveUnitDice[]>(
+export const unitDicesSelector = createSelector<BattleState, BattleSelectorProps, string, DiceStateMap, DiceToUnitAssignment[], DiceToCardAssignment[], ActiveUnitDice[]>(
     activeUnitIdSelector,
     dicesSelector,
     diceToUnitAssignmentsSelector,
     diceToCardAssignmentsSelector,
-    (activeUnitId, dices, diceToUnitAssignments, diceToCardAssignments): ActiveUnitDice[] => {
+    (activeUnitId, diceMap, diceToUnitAssignments, diceToCardAssignments): ActiveUnitDice[] => {
         return diceToUnitAssignments
             .filter(ass => ass.unitId === activeUnitId)
             .reduce((acc: DiceState[], ass: DiceToUnitAssignment) => {
-                const dice = dices.find(dice => dice.id === ass.diceId)
+                const dice = diceMap[ass.diceId]
                 if (dice) {
                     acc.push(dice)
                 }
@@ -153,16 +160,16 @@ export const unitDicesSelector = createSelector<BattleState, BattleSelectorProps
     }
 )
 
-export const unitCardsSelector = createSelector<BattleState, BattleSelectorProps, string, CardState[], CardToUnitAssignment[], DiceToCardAssignment[],ActiveUnitDice[], ActiveUnitCard[]>(
+export const unitCardsSelector = createSelector<BattleState, BattleSelectorProps, string, CardStateMap, CardToUnitAssignment[], DiceToCardAssignment[],ActiveUnitDice[], ActiveUnitCard[]>(
     activeUnitIdSelector,
     cardsSelector,
     cardToUnitAssignmentsSelector,
     diceToCardAssignmentsSelector,
     unitDicesSelector,
-    (activeUnitId, cards, cardToUnitAssignments, diceToCardAssignments, unitDices): ActiveUnitCard[] => cardToUnitAssignments
+    (activeUnitId, cardsMap, cardToUnitAssignments, diceToCardAssignments, unitDices): ActiveUnitCard[] => cardToUnitAssignments
         .filter(ass => ass.unitId === activeUnitId)
         .reduce((acc: CardState[], ass: CardToUnitAssignment) => {
-            const card = cards.find(card => card.id === ass.cardId)
+            const card = cardsMap[ass.cardId]
             if (card) {
                 acc.push(card)
             }
@@ -178,10 +185,9 @@ export const unitCardsSelector = createSelector<BattleState, BattleSelectorProps
         }))
 )
 
-export function getControlledUnits(state: BattleState, playerId: string) {
-    return state.unitToPlayerAssignments
-        .filter((ass => ass.playerId === playerId))
-        .map(ass => ass.unitId)
-        .map(unitId => state.units.filter(unit => unit.id === unitId)[0])
-        .filter(unit => !!unit)
-}
+/*export const turnsSelector = createSelector<BattleState, BattleSelectorProps, CardToUnitAssignment[],Turn[]>(
+    cardToUnitAssignmentsSelector,
+    (ctua)=>{
+
+    return ctua.map(ctua => ctua.)
+})*/
