@@ -9,7 +9,7 @@ import { BattleState, BattleViewState, PlayerQuery, PlayerQuerySelectTarget} fro
 import {
     acceptAssignment,
     keepDicesRequest,
-    cardPlayRequest, playerIdAssigned, setActiveUnitId, rollDicesRequest, assignDiceRequest,
+    cardPlayRequest, playerIdAssigned, setActiveUnitId, rollDicesRequest,
     unitSelectRequest, groupSelectRequest, request, diceSelectRequest
 } from './battle-actions'
 import {
@@ -205,7 +205,7 @@ const mapDispatchToProps = function (dispatch: Dispatch<any>): BattleViewDispatc
     return {
         onActiveUnitSelected: (unitId) => dispatch(setActiveUnitId(unitId)),
         onPlayerIdAssigned: (playerId) => dispatch(playerIdAssigned(playerId)),
-        onDiceSelectRequest: (unitId:string,diceId: string) => dispatch(diceSelectRequest(unitId,diceId)),
+        onDiceSelectRequest: (unitId:string,diceId: string) => dispatch(request(unitId,diceSelectRequest(diceId))),
         onRollDicesRequest: (unitId: string) => dispatch(request(unitId, rollDicesRequest())),
         onKeepDices: (unitId) => dispatch(request(unitId, keepDicesRequest())),
         onAcceptAssignment: () => dispatch(acceptAssignment()),

@@ -1,5 +1,5 @@
 import {Action} from 'redux';
-import {BattlePhases, DiceState, GroupState, PlayerQuery, UnitState} from './battle-reducer';
+import {BattlePhases, PlayerQuery} from './battle-reducer';
 
 export enum BattleTypeKeys {
     REQUEST_ACTION = 'REQUEST_ACTION',
@@ -42,15 +42,18 @@ export interface AssignDiceRequestAction extends Action {
 
 export interface AssignDiceResponseAction extends Action {
     type: BattleTypeKeys.ASSIGN_DICE_RESPONSE,
-    unitId: string
-    diceId: string
+    assignmentId: string
     cardId: string
+}
+
+export interface RollDicesResult {
+    [key: string] : number
 }
 
 export interface RollDicesResponseAction extends Action {
     type: BattleTypeKeys.ROLL_DICES_RESPONSE
     unitId: string
-    dices: DiceState[]
+    result: RollDicesResult
 }
 
 export interface RollDicesRequestAction extends Action {
@@ -96,7 +99,6 @@ export interface UnitSelectRequestAction extends Action {
 
 export interface DiceSelectRequestAction extends Action {
     type: BattleTypeKeys.DICE_SELECT_REQUEST
-    unitId: string
     diceId: string
 }
 
@@ -150,12 +152,11 @@ export function assignDiceRequest(unitId: string, diceId: string): AssignDiceReq
     }
 }
 
-export function assignDiceResponse(unitId: string, diceId: string, cardId: string): AssignDiceResponseAction {
+export function assignDiceResponse(assignmentId: string, cardId: string): AssignDiceResponseAction {
     return {
         type: BattleTypeKeys.ASSIGN_DICE_RESPONSE,
-        diceId,
-        cardId,
-        unitId
+        assignmentId,
+        cardId
     }
 }
 
@@ -165,11 +166,11 @@ export function rollDicesRequest(): RollDicesRequestAction {
     }
 }
 
-export function rollDicesResponse(unitId: string, dices: DiceState[]): RollDicesResponseAction {
+export function rollDicesResponse(unitId: string, result: RollDicesResult): RollDicesResponseAction {
     return {
         type: BattleTypeKeys.ROLL_DICES_RESPONSE,
         unitId,
-        dices
+        result
     }
 }
 
@@ -224,10 +225,9 @@ export function unitSelectRequest(unitId:string, targetUnitId:string): UnitSelec
     }
 }
 
-export function diceSelectRequest(unitId:string, diceId:string): DiceSelectRequestAction {
+export function diceSelectRequest(diceId:string): DiceSelectRequestAction {
     return {
         type: BattleTypeKeys.DICE_SELECT_REQUEST,
-        unitId,
         diceId
     }
 }

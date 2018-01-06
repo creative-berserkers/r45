@@ -1,5 +1,6 @@
 import {BattleActionTypes, BattleViewActionTypes, BattleTypeKeys, BattleViewTypeKeys} from './battle-actions';
-import {toIdMap} from "./battle-utils";
+import {toIdMap, getUniqueId, filterIdMap, updateIdMap, mapIdMapValues, everyIdMapValue} from "./battle-utils";
+import {diceToCardAssignmentsSelector} from "./battle-selectors";
 
 export enum WhereClauseType {
     MATCH_ALL = 'match-all',
@@ -32,13 +33,16 @@ export interface PlayerQuery {
     where?: WhereClause
 }
 
+export type DiceStateFaces = 0 | 1 | 2 | 3 | 4 | 5 | 6
+
 export interface DiceState {
     id: string
-    face: 0 | 1 | 2 | 3 | 4 | 5 | 6
+    faces: [DiceStateFaces, DiceStateFaces, DiceStateFaces, DiceStateFaces, DiceStateFaces, DiceStateFaces]
+    source: 'neutral' | 'fire' | 'shadow' | 'nature'
 }
 
 export interface DiceStateMap {
-    [key:string]: DiceState
+    [key: string]: DiceState
 }
 
 export interface CardState {
@@ -53,7 +57,7 @@ export interface CardState {
 }
 
 export interface CardStateMap {
-    [key:string]: CardState
+    [key: string]: CardState
 }
 
 export interface GroupState {
@@ -61,7 +65,7 @@ export interface GroupState {
 }
 
 export interface GroupStateMap {
-    [key:string] : GroupState
+    [key: string]: GroupState
 }
 
 export enum BattlePhases {
@@ -84,22 +88,30 @@ export interface UnitState {
 }
 
 export interface UnitStateMap {
-    [key:string]: UnitState
+    [key: string]: UnitState
 }
 
 export interface DiceToCardAssignment {
+    id: string
     diceId: string
     cardId: string
+    unitId: string
+    rollResult: number
 }
 
-export interface DiceToUnitAssignment {
-    diceId: string
-    unitId: string
+export interface DiceToCardAssignmentMap {
+    [key: string]: DiceToCardAssignment
 }
+
 
 export interface CardToUnitAssignment {
+    id: string
     cardId: string
     unitId: string
+}
+
+export interface CardToUnitAssignmentMap {
+    [key: string]: CardToUnitAssignment
 }
 
 export interface BattleState {
@@ -107,27 +119,15 @@ export interface BattleState {
     cards: CardStateMap
     groups: GroupStateMap
     units: UnitStateMap
-    diceToCardAssignments: DiceToCardAssignment[]
-    diceToUnitAssignments: DiceToUnitAssignment[]
-    cardToUnitAssignments: CardToUnitAssignment[]
+    diceToCardAssignments: DiceToCardAssignmentMap
+    cardToUnitAssignments: CardToUnitAssignmentMap
 }
 
 export const INIT_ROLLS = 3
 
 export const INITIAL_STATE: BattleState = {
     dices: toIdMap<DiceState>([
-        {id: 'dice1', face: 0},
-        {id: 'dice2', face: 0},
-        {id: 'dice3', face: 0},
-        {id: 'dice4', face: 0},
-        {id: 'dice5', face: 0},
-        {id: 'dice6', face: 0},
-        {id: 'dice7', face: 0},
-        {id: 'dice8', face: 0},
-        {id: 'dice9', face: 0},
-        {id: 'dice10', face: 0},
-        {id: 'dice11', face: 0},
-        {id: 'dice12', face: 0}
+        {id: 'dice1', faces: [1, 2, 3, 4, 5, 6], source: 'neutral'}
     ]),
     cards: toIdMap<CardState>([
         {
@@ -158,7 +158,7 @@ export const INITIAL_STATE: BattleState = {
             id: 'axe',
             require: 6,
             target: 'local-unit',
-            initiative:50
+            initiative: 50
         },
         {
             id: 'arrow',
@@ -185,10 +185,10 @@ export const INITIAL_STATE: BattleState = {
             query: [{
                 select: PlayerQuerySelectTarget.DICE_ACTION,
                 where: {
-                    type:WhereClauseType.MATCH_ALL,
-                    prop:'id',
-                    operator:WhereClauseOperator.EQUAL,
-                    value:'roll'
+                    type: WhereClauseType.MATCH_ALL,
+                    prop: 'id',
+                    operator: WhereClauseOperator.EQUAL,
+                    value: 'roll'
                 }
             }]
         },
@@ -204,10 +204,10 @@ export const INITIAL_STATE: BattleState = {
             query: [{
                 select: PlayerQuerySelectTarget.DICE_ACTION,
                 where: {
-                    type:WhereClauseType.MATCH_ALL,
-                    prop:'id',
-                    operator:WhereClauseOperator.EQUAL,
-                    value:'roll'
+                    type: WhereClauseType.MATCH_ALL,
+                    prop: 'id',
+                    operator: WhereClauseOperator.EQUAL,
+                    value: 'roll'
                 }
             }]
         },
@@ -223,198 +223,166 @@ export const INITIAL_STATE: BattleState = {
             query: [{
                 select: PlayerQuerySelectTarget.DICE_ACTION,
                 where: {
-                    type:WhereClauseType.MATCH_ALL,
-                    prop:'id',
-                    operator:WhereClauseOperator.EQUAL,
-                    value:'roll'
+                    type: WhereClauseType.MATCH_ALL,
+                    prop: 'id',
+                    operator: WhereClauseOperator.EQUAL,
+                    value: 'roll'
                 }
             }]
         }
     ]),
-    diceToCardAssignments: [],
-    diceToUnitAssignments: [
-        {diceId: 'dice1', unitId: 'unit1'},
-        {diceId: 'dice2', unitId: 'unit1'},
-        {diceId: 'dice3', unitId: 'unit1'},
-        {diceId: 'dice4', unitId: 'unit1'},
-        {diceId: 'dice5', unitId: 'unit2'},
-        {diceId: 'dice6', unitId: 'unit2'},
-        {diceId: 'dice7', unitId: 'unit3'},
-        {diceId: 'dice8', unitId: 'unit3'}
-    ],
-    cardToUnitAssignments: [
-        {cardId: 'heal', unitId: 'unit1'},
-        {cardId: 'maneuver', unitId: 'unit1'},
-        {cardId: 'teleport', unitId: 'unit1'},
-        {cardId: 'fireball', unitId: 'unit1'},
-        {cardId: 'maneuver', unitId: 'unit2'},
-        {cardId: 'arrow', unitId: 'unit2'},
-        {cardId: 'maneuver', unitId: 'unit3'},
-        {cardId: 'axe', unitId: 'unit3'},
-    ]
+    diceToCardAssignments: toIdMap<DiceToCardAssignment>([
+        {id: getUniqueId('dtca'), unitId: 'unit1', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId('dtca'), unitId: 'unit1', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId('dtca'), unitId: 'unit1', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId('dtca'), unitId: 'unit1', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId('dtca'), unitId: 'unit2', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId('dtca'), unitId: 'unit2', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId('dtca'), unitId: 'unit2', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId('dtca'), unitId: 'unit2', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId('dtca'), unitId: 'unit3', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId('dtca'), unitId: 'unit3', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId('dtca'), unitId: 'unit3', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId('dtca'), unitId: 'unit3', diceId: 'dice1', cardId: 'unassigned', rollResult: 0}
+    ]),
+    cardToUnitAssignments: toIdMap<CardToUnitAssignment>([
+        {id: getUniqueId('ctua'), cardId: 'heal', unitId: 'unit1'},
+        {id: getUniqueId('ctua'), cardId: 'maneuver', unitId: 'unit1'},
+        {id: getUniqueId('ctua'), cardId: 'teleport', unitId: 'unit1'},
+        {id: getUniqueId('ctua'), cardId: 'fireball', unitId: 'unit1'},
+        {id: getUniqueId('ctua'), cardId: 'maneuver', unitId: 'unit2'},
+        {id: getUniqueId('ctua'), cardId: 'arrow', unitId: 'unit2'},
+        {id: getUniqueId('ctua'), cardId: 'maneuver', unitId: 'unit3'},
+        {id: getUniqueId('ctua'), cardId: 'axe', unitId: 'unit3'},
+    ])
 }
 
 export function battleReducer(state: BattleState = INITIAL_STATE, action: BattleActionTypes): BattleState {
     switch (action.type) {
         case BattleTypeKeys.ASSIGN_DICE_RESPONSE:
+            const {assignmentId, cardId} = action
             return {
                 ...state,
-                diceToCardAssignments: [...state.diceToCardAssignments.filter(a => a.diceId !== action.diceId).filter(a => a.cardId !== action.cardId), {
-                    diceId: action.diceId,
-                    cardId: action.cardId
-                }].filter(a => a.cardId !== 'none')
+                diceToCardAssignments: updateIdMap(state.diceToCardAssignments, assignmentId, (oldAssignment) => ({
+                    ...oldAssignment,
+                    cardId
+                }))
             }
         case BattleTypeKeys.ROLL_DICES_RESPONSE: {
-            const responseUnit = state.units[action.unitId]
+            const {unitId, result} = action
+            const responseUnit = state.units[unitId]
             const newRolls = responseUnit.rolls - 1
             const newState = {
                 ...state,
-                dices: {...state.dices,...toIdMap(action.dices)},
-                diceToCardAssignments: state.diceToCardAssignments
-                    .filter(ass => action.dices.find(d => d.id === ass.diceId) === undefined)
-                    .concat(
-                        Object.keys(state.cards)
-                            .filter((cardId) => state.cardToUnitAssignments.filter(ctu => ctu.unitId === action.unitId).find(ctu => ctu.cardId === cardId) !== undefined)
-                            .reduce((acc, cardId) => {
-                                const matchingDice = action.dices
-                                    .filter(d => d.face === state.cards[cardId].require)
-                                    .filter(d => state.diceToCardAssignments.filter(a => a.diceId === d.id))[0]
-                                if (matchingDice) {
-                                    return [...acc, {diceId: matchingDice.id, cardId: cardId}]
-                                } else {
-                                    return acc
-                                }
-                            }, [])),
-                units: {
-                    ...state.units,
-                    [action.unitId] : {
-                        ...responseUnit,
-                        rolls: newRolls,
-                        phase: newRolls === 0 ? BattlePhases.WAITING_FOR_OTHERS : responseUnit.phase === BattlePhases.ROLLING ? BattlePhases.REROLLING : responseUnit.phase,
-                        query: newRolls === 0 ? [
-                            {select: PlayerQuerySelectTarget.NONE},
-                        ] : responseUnit.phase === BattlePhases.ROLLING ? [
-                            {select: PlayerQuerySelectTarget.DICE},
-                            {select: PlayerQuerySelectTarget.DICE_ACTION, where:{ type:WhereClauseType.MATCH_ALL, prop:'id',operator:WhereClauseOperator.EQUAL, value:'roll' }},
-                            {select: PlayerQuerySelectTarget.DICE_ACTION, where:{ type:WhereClauseType.MATCH_ALL, prop:'id',operator:WhereClauseOperator.EQUAL, value:'keep' }}
-                        ] : responseUnit.query
+                diceToCardAssignments: mapIdMapValues(state.diceToCardAssignments, (assignment) => {
+                    if (result[assignment.id]) {
+                        return {
+                            ...assignment,
+                            rollResult: result[assignment.id]
+                        }
                     }
-                }
-            }
-            const allPlayersPlaying = Object.keys(newState.units).every(unitId => newState.units[unitId].phase === BattlePhases.WAITING_FOR_OTHERS)
-            if(allPlayersPlaying){
-                return {
-                    ...newState,
-                    units: toIdMap<UnitState>(Object.keys(newState.units).map((unitId) => ({
-                        ...newState.units[unitId],
-                        phase: BattlePhases.PLAYING_CARDS,
-                        query: [{
-                            select: PlayerQuerySelectTarget.CARD,
+                    return assignment
+                }),
+                units: updateIdMap(state.units, unitId, (oldUnit) => ({
+                    ...oldUnit,
+                    rolls: newRolls,
+                    phase: newRolls === 0 ? BattlePhases.WAITING_FOR_OTHERS : oldUnit.phase === BattlePhases.ROLLING ? BattlePhases.REROLLING : oldUnit.phase,
+                    query: newRolls === 0 ? [
+                        {select: PlayerQuerySelectTarget.NONE},
+                    ] : oldUnit.phase === BattlePhases.ROLLING ? [
+                        {select: PlayerQuerySelectTarget.DICE},
+                        {
+                            select: PlayerQuerySelectTarget.DICE_ACTION,
                             where: {
                                 type: WhereClauseType.MATCH_ALL,
-                                prop: 'diceId',
-                                operator: WhereClauseOperator.NOT_EQUAL,
-                                value: 'none'
+                                prop: 'id',
+                                operator: WhereClauseOperator.EQUAL,
+                                value: 'roll'
                             }
-                        }]
-                    })))
+                        },
+                        {
+                            select: PlayerQuerySelectTarget.DICE_ACTION,
+                            where: {
+                                type: WhereClauseType.MATCH_ALL,
+                                prop: 'id',
+                                operator: WhereClauseOperator.EQUAL,
+                                value: 'keep'
+                            }
+                        }
+                    ] : oldUnit.query
+                }))
+            }
+            const allPlayersPlaying = Object.keys(newState.units).every(unitId => newState.units[unitId].phase === BattlePhases.WAITING_FOR_OTHERS)
+            if (allPlayersPlaying) {
+                return {
+                    ...newState,
+                    units: mapUnitsToAllPlayingCards(newState.units)
                 }
             }
             return newState
         }
-        case BattleTypeKeys.KEEP_DICES_RESPONSE:
-            const responseUnit = state.units[action.unitId]
+        case BattleTypeKeys.KEEP_DICES_RESPONSE: {
+            const {unitId} = action
             const newState = {
                 ...state,
-                units : {
-                    ...state.units,
-                    [responseUnit.id]:{
-                        ...responseUnit,
-                        phase: BattlePhases.WAITING_FOR_OTHERS,
-                        query:  [
-                            {select: PlayerQuerySelectTarget.NONE},
-                        ],
-                        rolls: 0
-                    }
-                }
+                units: updateIdMap(state.units, unitId, (oldUnit) => ({
+                    ...oldUnit,
+                    phase: BattlePhases.WAITING_FOR_OTHERS,
+                    query: [
+                        {select: PlayerQuerySelectTarget.NONE},
+                    ],
+                    rolls: 0
+                }))
             }
-            const allPlayersPlaying = Object.keys(newState.units).every(unitId => newState.units[unitId].phase === BattlePhases.WAITING_FOR_OTHERS)
-            if(allPlayersPlaying){
+            if (everyIdMapValue(newState.units, ({phase}) => phase === BattlePhases.WAITING_FOR_OTHERS)) {
                 return {
                     ...newState,
-                    units: toIdMap<UnitState>(Object.keys(newState.units).map((unitId) => ({
-                        ...newState.units[unitId],
-                        phase: BattlePhases.PLAYING_CARDS,
-                        query: [{
-                            select: PlayerQuerySelectTarget.CARD,
-                            where: {
-                                type: WhereClauseType.MATCH_ALL,
-                                prop: 'diceId',
-                                operator: WhereClauseOperator.NOT_EQUAL,
-                                value: 'none'
-                            }
-                        }]
-                    })))
+                    units: mapUnitsToAllPlayingCards(newState.units)
                 }
             }
             return newState
-        case BattleTypeKeys.SET_UNIT_PHASE_RESPONSE:
+        }
+        case BattleTypeKeys.SET_UNIT_PHASE_RESPONSE: {
+            const {unitId, phase} = action
             return {
                 ...state,
-                units : {...state.units,
-                    [action.unitId] : {
-                        ...state.units[action.unitId],
-                        phase: action.phase
-                    }
-                }
+                units: updateIdMap(state.units, unitId, (oldUnit) => ({...oldUnit, phase}))
             }
+        }
         case BattleTypeKeys.ACCEPT_ASSIGNMENT:
             return {
                 ...state,
             }
         case BattleTypeKeys.PLAYER_QUERY_RESPONSE: {
+            const {unitId, query} = action
             return {
                 ...state,
-                units: {
-                    ...state.units,
-                    [action.unitId]: {
-                        ...state.units[action.unitId],
-                        query:action.query
-                    }
-                }
+                units: updateIdMap(state.units, unitId, (oldUnit) => ({...oldUnit, query}))
             }
         }
         case BattleTypeKeys.DAMAGE_UNIT_RESPONSE: {
+            const {unitId, dmgAmount: damage} = action
             return {
                 ...state,
-                units: {...state.units,
-                    [action.unitId]:{
-                        ...state.units[action.unitId],
-                        damage: action.dmgAmount
-                    }
-                }
+                units: updateIdMap(state.units, unitId, (oldUnit) => ({...oldUnit, damage}))
             }
         }
         case BattleTypeKeys.KILL_UNIT_RESPONSE: {
             // noinspection JSUnusedLocalSymbols
-            const {[action.unitId]:omit,...rest} = state.units
+            const {unitId} = action
+            const {[unitId]: omit, ...rest} = state.units
             return {
                 ...state,
                 units: rest,
-                cardToUnitAssignments: state.cardToUnitAssignments.filter(ctua => ctua.unitId !== action.unitId),
-                diceToUnitAssignments: state.diceToUnitAssignments.filter(dtua => dtua.unitId !== action.unitId)
+                cardToUnitAssignments: filterIdMap(state.cardToUnitAssignments, (a) => a.unitId !== unitId),
+                diceToCardAssignments: filterIdMap(state.diceToCardAssignments, (a) => a.unitId !== unitId)
             }
         }
         case BattleTypeKeys.MOVE_UNIT_TO_GROUP_RESPONSE: {
+            const {groupId, unitId} = action
             return {
                 ...state,
-                units : {
-                    ...state.units,
-                    [action.unitId] : {
-                        ...state.units[action.unitId],
-                        groupId: action.groupId
-                    }
-                }
+                units: updateIdMap(state.units, unitId, (oldUnit) => ({...oldUnit, groupId}))
             }
         }
         default:
@@ -440,4 +408,21 @@ export function battleViewReducer(state: BattleViewState = BATTLE_VIEW_INITIAL_S
         default:
             return state
     }
+}
+
+export const mapUnitsToAllPlayingCards = (units: UnitStateMap) => {
+    return mapIdMapValues(units, (oldUnit) => ({
+        ...oldUnit,
+        phase: BattlePhases.PLAYING_CARDS,
+        query: [{
+            select: PlayerQuerySelectTarget.CARD,
+            where: {
+                type: WhereClauseType.MATCH_ALL,
+                prop: 'diceId',
+                operator: WhereClauseOperator.NOT_EQUAL,
+                value: 'none'
+            }
+        }]
+    }))
+
 }
