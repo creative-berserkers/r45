@@ -14,7 +14,8 @@ import {
 } from './battle-actions'
 import {
     cardDrawerActionsSelector, diceDrawerActionsSelector, groupsWithUnitsSelector, ActiveUnitCard, ActiveUnitDice,
-    Group, unitCardsSelector, unitDicesSelector, BattleSelectorProps, unitQuerySelector
+    Group, BattleSelectorProps, unitQuerySelector, activeUnitCardsSelector,
+    activeUnitDicesSelector
 } from './battle-selectors'
 import {checkCondition} from './battle-utils';
 
@@ -60,7 +61,7 @@ export interface BattleViewContainerProps {
 export type BattleViewProps = BattleViewStateProps & BattleViewDispatchProps & BattleViewContainerProps
 
 
-export class BattleView extends React.Component<BattleViewProps, any> {
+class BattleView extends React.Component<BattleViewProps, any> {
 
     constructor() {
         super()
@@ -173,6 +174,7 @@ export class BattleView extends React.Component<BattleViewProps, any> {
                     key={dice.id}
                     face={dice.face}
                     style={diceStyle}
+                    showHighlight={checkCondition(PlayerQuerySelectTarget.DICE, dice, this.props.activeUnitQuery)}
                     selected={dice.isSelected}
                     onClick={this.onDiceClick(dice)}
                     description={JSON.stringify(dice,null,2)}
@@ -190,7 +192,7 @@ export class BattleView extends React.Component<BattleViewProps, any> {
                     name={card.id}
                     style={cardStyle}
                     diceSlot={card.require}
-                    diceSlotEmpty={card.diceId === 'none'}
+                    diceSlotEmpty={!card.isActive}
                     showSlot={true}
                     showPlayButton={checkCondition(PlayerQuerySelectTarget.CARD, card, this.props.activeUnitQuery)}
                     onDiceSlotClick={this.onCardSlotClick}
@@ -227,11 +229,12 @@ const mapStateToProps = function (state: any, ownProps: BattleViewContainerProps
         //turns: turnsSelector(battleState, {activeUnitId}),
         diceDrawerActions: diceDrawerActionsSelector(battleState, props),
         cardDrawerActions: cardDrawerActionsSelector(battleState, props),
-        unitCards: unitCardsSelector(battleState, props),
-        unitDices: unitDicesSelector(battleState, props)
+        unitCards: activeUnitCardsSelector(battleState, props),
+        unitDices: activeUnitDicesSelector(battleState, props)
     }
 }
 
 const BattleViewContainer = connect<BattleViewStateProps, BattleViewDispatchProps, BattleViewContainerProps>(mapStateToProps, mapDispatchToProps)(BattleView)
 
+// noinspection JSUnusedGlobalSymbols
 export default BattleViewContainer

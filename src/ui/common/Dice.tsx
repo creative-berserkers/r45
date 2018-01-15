@@ -5,6 +5,7 @@ export interface CardStateProps {
     size?:number
     selected?: boolean
     onClick?: () => void
+    showHighlight?: boolean
     style?: React.CSSProperties
     description?:string
 }
@@ -19,7 +20,10 @@ export default class Dice extends React.Component<CardStateProps, {}> {
 
     render() {
 
-        const {style,face, size = 80, selected, description} = this.props
+        const {style,face, size = 80, selected, description, showHighlight = false} = this.props
+
+        const borderColor = showHighlight ? 'rgb(0, 188, 212)' : 'black'
+        const boxShadow = showHighlight ? '0px 0px 16px 8px rgb(0, 188, 212)' : '0px 1px 6px rgba(0, 0, 0, 0.12), 0px 1px 4px rgba(0, 0, 0, 0.12)'
 
         const rootStyle: React.CSSProperties = {
             width: `${size}px`,
@@ -31,7 +35,8 @@ export default class Dice extends React.Component<CardStateProps, {}> {
             boxSizing: 'border-box',
             fontFamily: 'Roboto, sans-serif',
             WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
-            boxShadow: 'rgba(0, 0, 0, 0.12) 0px 1px 6px, rgba(0, 0, 0, 0.12) 0px 1px 4px',
+            borderColor,
+            boxShadow,
             borderRadius: '2px',
             zIndex: 1,
             ...style

@@ -48,6 +48,7 @@ export function mapValues<T>(obj: { [key: string]: T }, func: MapValuesFunc = ma
 }
 
 export interface FilterIdMapFunction<T> {
+    // noinspection JSUnusedLocalSymbols
     (value: T): boolean
 }
 
@@ -61,6 +62,7 @@ export function filterIdMap<T>(map: IdMap<T>, filterFunc: FilterIdMapFunction<T>
 }
 
 export interface UpdateIdMapFunc<T> {
+    // noinspection JSUnusedLocalSymbols
     (value: T): T
 }
 
@@ -83,4 +85,12 @@ export function everyIdMapValue<T>(map: IdMap<T>, func: FilterIdMapFunction<T>):
         if (acc === false) return false
         return func(map[mapKey])
     }, true)
+}
+
+export function findIdMapValue<T>(map: IdMap<T>, func: FilterIdMapFunction<T>): T | undefined {
+    const mapKey = Object.keys(map).find((mapKey: string): boolean => {
+        return func(map[mapKey])
+    })
+
+    return mapKey ? map[mapKey] : undefined
 }

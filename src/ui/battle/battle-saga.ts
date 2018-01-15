@@ -6,14 +6,14 @@ import {
     RollDicesResult
 } from './battle-actions'
 import {
-    BattlePhases, CardState, DiceState, DiceToCardAssignment, DiceToCardAssignmentMap,
+    BattlePhases, DiceToCardAssignment, StateMap,
     UnitState
 } from './battle-reducer'
 import {
-    unitSelector, cardsSelector, dicesSelector, diceToCardAssignmentsSelector, ActiveUnitDice,
-    unitDicesSelector, BattleStateSelector, Unit, Group, unitGroupSelector
+    unitSelector, diceToCardAssignmentsSelector, BattleStateSelector, Unit, Group, unitGroupSelector,
+    ActiveUnitCard, activeUnitCardsSelector
 } from './battle-selectors'
-import {getRandomArbitrary, mapValues} from './battle-utils';
+import { findIdMapValue, getRandomArbitrary, mapValues} from './battle-utils';
 
 const rollDices = (stateSelector:BattleStateSelector) => function* (unitId:string){
     const unit:UnitState = yield select((state:any) => unitSelector(stateSelector(state),{unitId}))
@@ -36,38 +36,19 @@ const keepDices = (stateSelector:BattleStateSelector) => function* (unitId:strin
     yield put(keepDicesResponse(unitId))
 }
 
-const assignDice = (stateSelector:BattleStateSelector) => function* (unitId:string,diceId:string) {
-    const diceToCardAssignments:DiceToCardAssignment[] = yield select((state:any) => diceToCardAssignmentsSelector(stateSelector(state), {unitId}))
-    const cards:CardState[] = yield select((state:any) => cardsSelector(stateSelector(state), {unitId}))
-    const dices:DiceState[] = yield select((state:any) => dicesSelector(stateSelector(state), {unitId}))
-    const selectedDice = dices.find(d => d.id === diceId)
+const assignDice = (stateSelector:BattleStateSelector) => function* (unitId:string,assignmentId:string) {
+    const diceToCardAssignments:StateMap<DiceToCardAssignment> = yield select((state:any) => diceToCardAssignmentsSelector(stateSelector(state)))
+    const selectedDiceToCardAssignment = findIdMapValue(diceToCardAssignments, (diceToCardAssignment) => diceToCardAssignment.id === assignmentId)
+    if(!selectedDiceToCardAssignment) return
 
-    if(!selectedDice) return
-
-    const unitDices = diceToCardAssignments
-        .filter(assignment => assignment.diceId === diceId && assignment.unitId === unitId)
-
-    const [assignmentId, cardId] = cards.reduce((acc,card) => {
-        const assignment = unitDices.find(ud => ud.rollResult === card.require)
-        if(assignment){
-            return [assignment.id, card.id]
+    if(selectedDiceToCardAssignment.cardId === 'unassigned') {
+        const cards: ActiveUnitCard[] = yield select((state: any) => activeUnitCardsSelector(stateSelector(state), {unitId}))
+        const targetCard = cards.find(card => card.require === selectedDiceToCardAssignment.rollResult && card.isActive === false)
+        if (targetCard) {
+            yield put(assignDiceResponse(selectedDiceToCardAssignment.id, targetCard.id))
         }
-        return acc
-    }, [undefined, undefined])
-
-
-    if (assignmentId && cardId) {
-        yield put(assignDiceResponse(assignmentId,cardId))
     } else {
-        /*const matchingCard = cards
-            .filter(card => card.require === selectedDice.face)
-            .filter(card => diceToCardAssignments.filter(assignment => assignment.cardId === card.id))[0]
-
-        if (matchingCard) {
-            yield put(assignDiceResponse(unitId, selectedDice.id, matchingCard.id))
-        } else {
-            yield put(assignDiceResponse(unitId, selectedDice.id, 'none'))
-        }*/
+        yield put(assignDiceResponse(selectedDiceToCardAssignment.id, 'unassigned'))
     }
 }
 

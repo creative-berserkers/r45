@@ -1,9 +1,7 @@
 import {createSelector} from 'reselect'
 import {
     CardState, DiceToCardAssignment, PlayerQuery,
-    CardToUnitAssignment, BattleState, PlayerQuerySelectTarget, GroupStateMap, CardStateMap,
-    DiceStateMap,
-    DiceToCardAssignmentMap, CardToUnitAssignmentMap,
+    CardToUnitAssignment, BattleState, PlayerQuerySelectTarget, StateMap, GroupState, DiceState,
 } from './battle-reducer'
 import {DrawerAction} from '../common/Drawer';
 import {checkCondition} from './battle-utils';
@@ -31,26 +29,22 @@ export interface ActiveUnitDice {
     id: string
     face: number
     isSelected: boolean
+    canBeAssignedToCard: boolean
 }
 
 export interface ActiveUnitCard {
     id: string
     require: number
     target: string
-    diceId: string
+    isActive: boolean
 }
 
-export interface Turn {
-    unitId: string
-    cardId: string
-}
-
-export type BattleStateSelector = (state:any) => BattleState
+export type BattleStateSelector = (state: any) => BattleState
 
 export const activeUnitIdSelector = (state: BattleState, props: BattleSelectorProps) => props.unitId
-export const cardsSelector = (state: BattleState, props: BattleSelectorProps) => state.cards
-export const groupsSelector = (state: BattleState, props: BattleSelectorProps) => state.groups
-export const unitsSelector = (state: BattleState, props?: BattleSelectorProps):Unit[] => Object.keys(state.units).map(unitId => {
+export const cardsSelector = (state: BattleState) => state.cards
+export const groupsSelector = (state: BattleState) => state.groups
+export const unitsSelector = (state: BattleState): Unit[] => Object.keys(state.units).map(unitId => {
     const unit = state.units[unitId]
     return {
         id: unit.id,
@@ -62,42 +56,45 @@ export const unitsSelector = (state: BattleState, props?: BattleSelectorProps):U
         query: unit.query
     }
 })
-export const dicesSelector = (state: BattleState, props: BattleSelectorProps) => state.dices
-export const diceToCardAssignmentsSelector = (state: BattleState, props: BattleSelectorProps) => state.diceToCardAssignments
-export const cardToUnitAssignmentsSelector = (state: BattleState, props: BattleSelectorProps) => state.cardToUnitAssignments
+export const dicesSelector = (state: BattleState) => state.dices
+export const diceToCardAssignmentsSelector = (state: BattleState) => state.diceToCardAssignments
+export const cardToUnitAssignmentsSelector = (state: BattleState) => state.cardToUnitAssignments
 
-export const unitSelector = createSelector<BattleState,BattleSelectorProps,string,Unit[],Unit|undefined>(
-  activeUnitIdSelector,
-  unitsSelector,
-  (activeUnitId, units) => {
-    return units.find(unit => unit.id === activeUnitId)
-  }
+export const unitSelector = createSelector<BattleState, BattleSelectorProps, string, Unit[], Unit | undefined>(
+    activeUnitIdSelector,
+    unitsSelector,
+    (activeUnitId, units) => {
+        return units.find(unit => unit.id === activeUnitId)
+    }
 )
 
-export const unitQuerySelector = createSelector<BattleState,BattleSelectorProps,Unit|undefined, PlayerQuery[]>(
+export const unitQuerySelector = createSelector<BattleState, BattleSelectorProps, Unit | undefined, PlayerQuery[]>(
     unitSelector,
-    (unit:Unit|undefined) => {
-        return unit ? unit.query : [{select:PlayerQuerySelectTarget.NONE}]
+    (unit: Unit | undefined) => {
+        return unit ? unit.query : [{select: PlayerQuerySelectTarget.NONE}]
     }
 )
 
-export const diceDrawerActionsSelector = createSelector<BattleState, BattleSelectorProps,Unit|undefined, DrawerAction[]>(
-  unitSelector,
-  (activeUnit:Unit):DrawerAction[]=>activeUnit ? [
-    {
-      id: 'roll',
-      name: `Roll(${activeUnit.rolls})`
-    },
-    {
-      id: 'keep',
-      name: 'Keep'
-    }
-  ].map(action => ({...action, visible:checkCondition(PlayerQuerySelectTarget.DICE_ACTION, action, activeUnit.query)})) : []
+export const diceDrawerActionsSelector = createSelector<BattleState, BattleSelectorProps, Unit | undefined, DrawerAction[]>(
+    unitSelector,
+    (activeUnit: Unit): DrawerAction[] => activeUnit ? [
+        {
+            id: 'roll',
+            name: `Roll(${activeUnit.rolls})`
+        },
+        {
+            id: 'keep',
+            name: 'Keep'
+        }
+    ].map(action => ({
+        ...action,
+        visible: checkCondition(PlayerQuerySelectTarget.DICE_ACTION, action, activeUnit.query)
+    })) : []
 )
 
 export const cardDrawerActionsSelector = createSelector<BattleState, BattleSelectorProps, Unit | undefined, DrawerAction[]>(
     unitSelector,
-    (activeUnit:Unit): DrawerAction[] => activeUnit ? [
+    (activeUnit: Unit): DrawerAction[] => activeUnit ? [
         {
             id: 'accept-assignment',
             name: 'Accept',
@@ -107,7 +104,7 @@ export const cardDrawerActionsSelector = createSelector<BattleState, BattleSelec
     ] : []
 )
 
-export const groupsWithUnitsSelector = createSelector<BattleState, BattleSelectorProps, GroupStateMap, Unit[], Group[]>(
+export const groupsWithUnitsSelector = createSelector<BattleState, BattleSelectorProps, StateMap<GroupState>, Unit[], Group[]>(
     groupsSelector,
     unitsSelector,
     (groupMap, units): Group[] => Object.keys(groupMap).map(groupId => ({
@@ -116,43 +113,29 @@ export const groupsWithUnitsSelector = createSelector<BattleState, BattleSelecto
     }))
 )
 
-export const unitGroupSelector = createSelector<BattleState,BattleSelectorProps,string,Group[],Group|undefined>(
+export const unitGroupSelector = createSelector<BattleState, BattleSelectorProps, string, Group[], Group | undefined>(
     activeUnitIdSelector,
     groupsWithUnitsSelector,
-    (unitId:string, groups:Group[]) => {
+    (unitId: string, groups: Group[]) => {
         return groups.find(group => group.units.find(unit => unit.id === unitId) !== undefined)
     }
 )
 
-export const unitDicesSelector = createSelector<BattleState, BattleSelectorProps, string, DiceStateMap, DiceToCardAssignmentMap, ActiveUnitDice[]>(
+export const unitDiceToCardAssignmentsSelector = createSelector<BattleState, BattleSelectorProps, string, StateMap<DiceToCardAssignment>, DiceToCardAssignment[]>(
     activeUnitIdSelector,
-    dicesSelector,
     diceToCardAssignmentsSelector,
-    (activeUnitId, diceMap, diceToCardAssignmentsMap): ActiveUnitDice[] => {
+    (activeUnitId, diceToCardAssignmentsMap): DiceToCardAssignment[] => {
         return Object.keys(diceToCardAssignmentsMap)
             .map(assId => diceToCardAssignmentsMap[assId])
             .filter(ass => ass.unitId === activeUnitId)
-            .reduce((acc: ActiveUnitDice[], ass: DiceToCardAssignment) => {
-                const dice = diceMap[ass.diceId]
-                if (dice) {
-                    acc.push({
-                        id: ass.id,
-                        face: ass.rollResult,
-                        isSelected: ass.cardId !== 'unassigned' && ass.cardId !== 'used'
-                    })
-                }
-                return acc
-            }, [])
     }
 )
 
-export const unitCardsSelector = createSelector<BattleState, BattleSelectorProps, string, CardStateMap, CardToUnitAssignmentMap, DiceToCardAssignmentMap,ActiveUnitDice[], ActiveUnitCard[]>(
+export const unitCardsSelector = createSelector<BattleState, BattleSelectorProps, string, StateMap<CardState>, StateMap<CardToUnitAssignment>, CardState[]>(
     activeUnitIdSelector,
     cardsSelector,
     cardToUnitAssignmentsSelector,
-    diceToCardAssignmentsSelector,
-    unitDicesSelector,
-    (activeUnitId, cardsMap, cardToUnitAssignmentMap, diceToCardAssignmentMap, unitDices): ActiveUnitCard[] => Object.keys(cardToUnitAssignmentMap)
+    (activeUnitId, cardsMap, cardToUnitAssignmentMap): CardState[] => Object.keys(cardToUnitAssignmentMap)
         .map(assignmentKey => cardToUnitAssignmentMap[assignmentKey])
         .filter(ass => ass.unitId === activeUnitId)
         .reduce((acc: CardState[], ass: CardToUnitAssignment) => {
@@ -162,20 +145,39 @@ export const unitCardsSelector = createSelector<BattleState, BattleSelectorProps
             }
             return acc
         }, [])
+)
+
+export const activeUnitCardsSelector = createSelector<BattleState, BattleSelectorProps, string, CardState[], DiceToCardAssignment[], ActiveUnitCard[]>(
+    activeUnitIdSelector,
+    unitCardsSelector,
+    unitDiceToCardAssignmentsSelector,
+    (activeUnitId, unitCards, unitDiceToCardAssignments): ActiveUnitCard[] => unitCards
         .map((card: CardState): ActiveUnitCard => ({
             id: card.id,
             require: card.require,
             target: card.target,
-            diceId: Object.keys(diceToCardAssignmentMap)
-                .map(dtcaKey => diceToCardAssignmentMap[dtcaKey])
-                .filter(a => unitDices.find(d => a.diceId === d.id) !== undefined)
-                .reduce((acc,a) => (a.cardId === card.id) ? a.diceId : acc, 'none')
+            isActive: unitDiceToCardAssignments.find(a => (a.cardId === card.id && a.unitId === activeUnitId)) !== undefined
         }))
 )
 
-/*export const turnsSelector = createSelector<BattleState, BattleSelectorProps, CardToUnitAssignment[],Turn[]>(
-    cardToUnitAssignmentsSelector,
-    (ctua)=>{
-
-    return ctua.map(ctua => ctua.)
-})*/
+export const  activeUnitDicesSelector = createSelector<BattleState, BattleSelectorProps, string, StateMap<DiceState>, DiceToCardAssignment[], ActiveUnitCard[], ActiveUnitDice[]>(
+    activeUnitIdSelector,
+    dicesSelector,
+    unitDiceToCardAssignmentsSelector,
+    activeUnitCardsSelector,
+    (activeUnitId, diceMap, unitDiceToCardAssignments, activeUnitCards): ActiveUnitDice[] => {
+        return unitDiceToCardAssignments
+            .reduce((acc: ActiveUnitDice[], ass: DiceToCardAssignment) => {
+                const dice = diceMap[ass.diceId]
+                if (dice) {
+                    acc.push({
+                        id: ass.id,
+                        face: ass.rollResult,
+                        isSelected: ass.cardId !== 'unassigned' && ass.cardId !== 'used',
+                        canBeAssignedToCard: activeUnitCards.find(card => card.require === ass.rollResult && card.isActive === false) !== undefined
+                    })
+                }
+                return acc
+            }, [])
+    }
+)

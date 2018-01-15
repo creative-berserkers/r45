@@ -1,8 +1,15 @@
 import {BattleActionTypes, BattleViewActionTypes, BattleTypeKeys, BattleViewTypeKeys} from './battle-actions';
-import {toIdMap, getUniqueId, filterIdMap, updateIdMap, mapIdMapValues, everyIdMapValue} from "./battle-utils";
-import {diceToCardAssignmentsSelector} from "./battle-selectors";
+import {toIdMap, getUniqueId, filterIdMap, updateIdMap, mapIdMapValues, everyIdMapValue} from './battle-utils';
+
+export const DICE_TO_CARD_ASSIGNMENT_NAMESPACE = 'diceToCardAssignment'
+export const CARD_TO_UNIT_ASSIGNMENT_NAMESPACE = 'cardToUnitAssignment'
+
+export interface StateMap<T> {
+    [key: string]: T
+}
 
 export enum WhereClauseType {
+    // noinspection JSUnusedGlobalSymbols
     MATCH_ALL = 'match-all',
     MATCH_ANY = 'match-any'
 }
@@ -16,7 +23,7 @@ export interface WhereClause {
     type: WhereClauseType
     prop: string
     operator: WhereClauseOperator
-    value: undefined | string | string[]
+    value: undefined | string | string[] | boolean
 }
 
 export enum PlayerQuerySelectTarget {
@@ -41,10 +48,6 @@ export interface DiceState {
     source: 'neutral' | 'fire' | 'shadow' | 'nature'
 }
 
-export interface DiceStateMap {
-    [key: string]: DiceState
-}
-
 export interface CardState {
     id: string
     require: number
@@ -56,16 +59,8 @@ export interface CardState {
         | 'remote-unit'
 }
 
-export interface CardStateMap {
-    [key: string]: CardState
-}
-
 export interface GroupState {
     id: string
-}
-
-export interface GroupStateMap {
-    [key: string]: GroupState
 }
 
 export enum BattlePhases {
@@ -87,10 +82,6 @@ export interface UnitState {
     query: PlayerQuery[]
 }
 
-export interface UnitStateMap {
-    [key: string]: UnitState
-}
-
 export interface DiceToCardAssignment {
     id: string
     diceId: string
@@ -99,31 +90,22 @@ export interface DiceToCardAssignment {
     rollResult: number
 }
 
-export interface DiceToCardAssignmentMap {
-    [key: string]: DiceToCardAssignment
-}
-
-
 export interface CardToUnitAssignment {
     id: string
     cardId: string
     unitId: string
 }
 
-export interface CardToUnitAssignmentMap {
-    [key: string]: CardToUnitAssignment
-}
-
 export interface BattleState {
-    dices: DiceStateMap
-    cards: CardStateMap
-    groups: GroupStateMap
-    units: UnitStateMap
-    diceToCardAssignments: DiceToCardAssignmentMap
-    cardToUnitAssignments: CardToUnitAssignmentMap
+    dices: StateMap<DiceState>
+    cards: StateMap<CardState>
+    groups: StateMap<GroupState>
+    units: StateMap<UnitState>
+    diceToCardAssignments: StateMap<DiceToCardAssignment>
+    cardToUnitAssignments: StateMap<CardToUnitAssignment>
 }
 
-export const INIT_ROLLS = 3
+export const INIT_ROLLS = 2
 
 export const INITIAL_STATE: BattleState = {
     dices: toIdMap<DiceState>([
@@ -232,28 +214,28 @@ export const INITIAL_STATE: BattleState = {
         }
     ]),
     diceToCardAssignments: toIdMap<DiceToCardAssignment>([
-        {id: getUniqueId('dtca'), unitId: 'unit1', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
-        {id: getUniqueId('dtca'), unitId: 'unit1', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
-        {id: getUniqueId('dtca'), unitId: 'unit1', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
-        {id: getUniqueId('dtca'), unitId: 'unit1', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
-        {id: getUniqueId('dtca'), unitId: 'unit2', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
-        {id: getUniqueId('dtca'), unitId: 'unit2', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
-        {id: getUniqueId('dtca'), unitId: 'unit2', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
-        {id: getUniqueId('dtca'), unitId: 'unit2', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
-        {id: getUniqueId('dtca'), unitId: 'unit3', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
-        {id: getUniqueId('dtca'), unitId: 'unit3', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
-        {id: getUniqueId('dtca'), unitId: 'unit3', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
-        {id: getUniqueId('dtca'), unitId: 'unit3', diceId: 'dice1', cardId: 'unassigned', rollResult: 0}
+        {id: getUniqueId(DICE_TO_CARD_ASSIGNMENT_NAMESPACE), unitId: 'unit1', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId(DICE_TO_CARD_ASSIGNMENT_NAMESPACE), unitId: 'unit1', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId(DICE_TO_CARD_ASSIGNMENT_NAMESPACE), unitId: 'unit1', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId(DICE_TO_CARD_ASSIGNMENT_NAMESPACE), unitId: 'unit1', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId(DICE_TO_CARD_ASSIGNMENT_NAMESPACE), unitId: 'unit2', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId(DICE_TO_CARD_ASSIGNMENT_NAMESPACE), unitId: 'unit2', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId(DICE_TO_CARD_ASSIGNMENT_NAMESPACE), unitId: 'unit2', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId(DICE_TO_CARD_ASSIGNMENT_NAMESPACE), unitId: 'unit2', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId(DICE_TO_CARD_ASSIGNMENT_NAMESPACE), unitId: 'unit3', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId(DICE_TO_CARD_ASSIGNMENT_NAMESPACE), unitId: 'unit3', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId(DICE_TO_CARD_ASSIGNMENT_NAMESPACE), unitId: 'unit3', diceId: 'dice1', cardId: 'unassigned', rollResult: 0},
+        {id: getUniqueId(DICE_TO_CARD_ASSIGNMENT_NAMESPACE), unitId: 'unit3', diceId: 'dice1', cardId: 'unassigned', rollResult: 0}
     ]),
     cardToUnitAssignments: toIdMap<CardToUnitAssignment>([
-        {id: getUniqueId('ctua'), cardId: 'heal', unitId: 'unit1'},
-        {id: getUniqueId('ctua'), cardId: 'maneuver', unitId: 'unit1'},
-        {id: getUniqueId('ctua'), cardId: 'teleport', unitId: 'unit1'},
-        {id: getUniqueId('ctua'), cardId: 'fireball', unitId: 'unit1'},
-        {id: getUniqueId('ctua'), cardId: 'maneuver', unitId: 'unit2'},
-        {id: getUniqueId('ctua'), cardId: 'arrow', unitId: 'unit2'},
-        {id: getUniqueId('ctua'), cardId: 'maneuver', unitId: 'unit3'},
-        {id: getUniqueId('ctua'), cardId: 'axe', unitId: 'unit3'},
+        {id: getUniqueId(CARD_TO_UNIT_ASSIGNMENT_NAMESPACE), cardId: 'heal', unitId: 'unit1'},
+        {id: getUniqueId(CARD_TO_UNIT_ASSIGNMENT_NAMESPACE), cardId: 'maneuver', unitId: 'unit1'},
+        {id: getUniqueId(CARD_TO_UNIT_ASSIGNMENT_NAMESPACE), cardId: 'teleport', unitId: 'unit1'},
+        {id: getUniqueId(CARD_TO_UNIT_ASSIGNMENT_NAMESPACE), cardId: 'fireball', unitId: 'unit1'},
+        {id: getUniqueId(CARD_TO_UNIT_ASSIGNMENT_NAMESPACE), cardId: 'maneuver', unitId: 'unit2'},
+        {id: getUniqueId(CARD_TO_UNIT_ASSIGNMENT_NAMESPACE), cardId: 'arrow', unitId: 'unit2'},
+        {id: getUniqueId(CARD_TO_UNIT_ASSIGNMENT_NAMESPACE), cardId: 'maneuver', unitId: 'unit3'},
+        {id: getUniqueId(CARD_TO_UNIT_ASSIGNMENT_NAMESPACE), cardId: 'axe', unitId: 'unit3'},
     ])
 }
 
@@ -286,11 +268,36 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
                 units: updateIdMap(state.units, unitId, (oldUnit) => ({
                     ...oldUnit,
                     rolls: newRolls,
-                    phase: newRolls === 0 ? BattlePhases.WAITING_FOR_OTHERS : oldUnit.phase === BattlePhases.ROLLING ? BattlePhases.REROLLING : oldUnit.phase,
+                    phase: oldUnit.phase === BattlePhases.ROLLING ? BattlePhases.REROLLING : oldUnit.phase,
                     query: newRolls === 0 ? [
-                        {select: PlayerQuerySelectTarget.NONE},
+                        {
+                            select: PlayerQuerySelectTarget.DICE,
+                            where: {
+                                type: WhereClauseType.MATCH_ALL,
+                                prop: 'canBeAssignedToCard',
+                                operator: WhereClauseOperator.EQUAL,
+                                value: true
+                            }
+                        },
+                        {
+                            select: PlayerQuerySelectTarget.DICE_ACTION,
+                            where: {
+                                type: WhereClauseType.MATCH_ALL,
+                                prop: 'id',
+                                operator: WhereClauseOperator.EQUAL,
+                                value: 'keep'
+                            }
+                        },
                     ] : oldUnit.phase === BattlePhases.ROLLING ? [
-                        {select: PlayerQuerySelectTarget.DICE},
+                        {
+                            select: PlayerQuerySelectTarget.DICE,
+                            where: {
+                                type: WhereClauseType.MATCH_ALL,
+                                prop: 'canBeAssignedToCard',
+                                operator: WhereClauseOperator.EQUAL,
+                                value: true
+                            }
+                        },
                         {
                             select: PlayerQuerySelectTarget.DICE_ACTION,
                             where: {
@@ -368,8 +375,8 @@ export function battleReducer(state: BattleState = INITIAL_STATE, action: Battle
             }
         }
         case BattleTypeKeys.KILL_UNIT_RESPONSE: {
-            // noinspection JSUnusedLocalSymbols
             const {unitId} = action
+            // noinspection JSUnusedLocalSymbols
             const {[unitId]: omit, ...rest} = state.units
             return {
                 ...state,
@@ -410,7 +417,7 @@ export function battleViewReducer(state: BattleViewState = BATTLE_VIEW_INITIAL_S
     }
 }
 
-export const mapUnitsToAllPlayingCards = (units: UnitStateMap) => {
+export const mapUnitsToAllPlayingCards = (units: StateMap<UnitState>) => {
     return mapIdMapValues(units, (oldUnit) => ({
         ...oldUnit,
         phase: BattlePhases.PLAYING_CARDS,
