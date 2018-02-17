@@ -3,6 +3,7 @@
     "src/server/game-server.ts"
   ],
   "compilerOptions": {
+    "diagnostics": true,
     "removeComments": true,
     "outDir": "dist",
     "target": "es6",

@@ -1,9 +1,9 @@
 import * as React from 'react'
 import Button from './Button'
-import { Unit } from '../battle/battle-selectors'
+import { ActiveUnitCard } from '../battle/battle-selectors'
 
-export interface UnitProps {
-  unit: Unit
+export interface TurnMarkerProps {
+  activeUnitCard: ActiveUnitCard
   debug?: boolean,
   showSelectButton?: boolean
   onSelect: (id: string) => void
@@ -27,7 +27,9 @@ const baseStyle: React.CSSProperties = {
   gridTemplateColumns: '1fr 1fr',
   gridTemplateRows: '50px auto',
   gridTemplateAreas: '"name dices" "content content"',
-  width: '400px',
+  padding: '10px',
+  margin: '3px',
+  width: '200px',
 }
 
 export const renderObject = (obj: any): any => <ul>
@@ -38,24 +40,24 @@ export const renderObject = (obj: any): any => <ul>
       </li>))}
 </ul>
 
-export const UnitComponent = ({
-                                unit,
-                                debug = false,
-                                showSelectButton = false,
-                                style,
-                                onSelectButton,
-                                onSelect,
-                              }: UnitProps) => <div style={{ ...baseStyle, ...style }} onClick={() => onSelect(unit.id)}>
+export const TurnMarker = ({
+                             activeUnitCard,
+                             debug = false,
+                             showSelectButton = false,
+                             style,
+                             onSelectButton,
+                             onSelect,
+                           }: TurnMarkerProps) => <div style={{ ...baseStyle, ...style }} onClick={() => onSelect(activeUnitCard.id)}>
   <div style={{ padding: '16px' }}>
-    {unit.name}
+    {activeUnitCard.unitId}/{activeUnitCard.id}/{activeUnitCard.initiative}
   </div>
   <div>
     {showSelectButton && <Button style={{}}
                                  label={'Select'}
-                                 onClick={() => onSelectButton(unit.id)}
+                                 onClick={() => onSelectButton(activeUnitCard.id)}
     />}
   </div>
   <div>
-    {debug && renderObject(unit)}
+    {debug && renderObject(activeUnitCard)}
   </div>
 </div>

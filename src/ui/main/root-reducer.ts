@@ -6,9 +6,9 @@ export interface RootState {
     battleView: BattleViewState
 }
 
-const rootReducer:Reducer<RootState|undefined> = combineReducers({
+const rootReducer:Reducer<RootState> = combineReducers<RootState>({
     battle: battleReducer,
     battleView: battleViewReducer
-})
+} as any)
 
 export default rootReducer
