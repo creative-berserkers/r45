@@ -1,4 +1,4 @@
-import { PlayerQuery, PlayerQuerySelectTarget, WhereClauseType } from './battle-reducer';
+import { PlayerQuery, PlayerQuerySelectTarget, WhereClauseType } from './battle-reducer'
 
 export function getRandomArbitrary(min: number, max: number) {
   return Math.floor(Math.random() * (max - min) + min) as any
@@ -44,11 +44,14 @@ export function getUniqueId(namespace: string): string {
   return `${namespace}-${idCounter}`
 }
 
-export type MapValuesFunc = <T, R>(key: string, value: T) => R
-export const mapValuesIdentity: MapValuesFunc = (key: string, inp) => inp as any
+export interface MapValuesFunc<T, R> {
+  (key: string, value: T) : R
+}
 
-export function mapValues<T>(obj: { [key: string]: T }, func: MapValuesFunc = mapValuesIdentity): T[] {
-  return Object.keys(obj).map(key => func(key, obj[key]))
+export const mapValuesIdentity: MapValuesFunc<any,any> = (key: string, inp: any) => inp
+
+export function mapValues<T,R>(obj: { [key: string]: T }, func: MapValuesFunc<T,R> = mapValuesIdentity): R[] {
+  return Object.keys(obj).map((key:string) => func(key, obj[key]))
 }
 
 export interface FilterIdMapFunction<T> {
@@ -65,20 +68,20 @@ export function filterIdMap<T>(map: IdMap<T>, filterFunc: FilterIdMapFunction<T>
   }, {})
 }
 
-export interface UpdateIdMapFunc<T> {
+export interface UpdateIdMapFunc<T, R> {
   // noinspection JSUnusedLocalSymbols
-  (value: T): T
+  (value: T): R
 }
 
-export function updateIdMap<T>(map: IdMap<T>, id: string, updateFunc: UpdateIdMapFunc<T>) {
+export function updateIdMap<T, R>(map: IdMap<T>, id: string, updateFunc: UpdateIdMapFunc<T, R>) {
   return {
     ...map,
     [id]: updateFunc(map[id]),
   }
 }
 
-export function mapIdMapValues<T>(map: IdMap<T>, func: UpdateIdMapFunc<T>): IdMap<T> {
-  return Object.keys(map).reduce((acc: IdMap<T>, key: string): IdMap<T> => {
+export function mapIdMapValues<T,R>(map: IdMap<T>, func: UpdateIdMapFunc<T, R>): IdMap<R> {
+  return Object.keys(map).reduce((acc: IdMap<R>, key: string): IdMap<R> => {
     acc[key] = func(map[key])
     return acc
   }, {})

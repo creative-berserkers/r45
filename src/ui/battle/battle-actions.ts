@@ -1,23 +1,24 @@
 import { Action } from 'redux'
 import {
-  BattlePhases, PlayCardPhases, PlayerCard, PlayerQuery, PlayerQuerySelectTarget,
+  BattlePhases, DiceRollState, PlayCardPhases, PlayerCard, PlayerQuery, PlayerQuerySelectTarget,
 } from './battle-reducer'
+import { createAction } from '../../utils/create-action'
+import { IdMap } from './battle-utils'
 
 export enum BattleTypeKeys {
-  REQUEST_ACTION = 'REQUEST_ACTION',
+  START_GAME_REQUEST_ACTION = 'START_GAME_REQUEST_ACTION',
   PLAYER_ID_ASSIGNED = 'PLAYER_ID_ASSIGNED',
   ASSIGN_DICE_REQUEST = 'ASSIGN_DICE_REQUEST',
   ASSIGN_DICE_RESPONSE = 'ASSIGN_DICE_RESPONSE',
   ROLL_DICES_REQUEST = 'ROLL_DICES_REQUEST',
-  ROLL_DICES_RESPONSE = 'ROLL_DICES_RESPONSE',
   KEEP_DICES_REQUEST = 'KEEP_DICES_REQUEST',
+  SET_UNIT_DICE_ROLLS = 'SET_UNIT_DICE_ROLLS',
   SET_UNIT_PHASE_RESPONSE = 'SET_UNIT_PHASE_RESPONSE',
   SET_UNIT_QUERY_RESPONSE = 'SET_UNIT_QUERY_RESPONSE',
+  SET_UNIT_ROLLS_RESPONSE = 'SET_UNIT_ROLLS_RESPONSE',
   KEEP_DICES_RESPONSE = 'KEEP_DICES_RESPONSE',
-  ACCEPT_ASSIGNMENT = 'ACCEPT_ASSIGNMENT',
   CARD_PLAY_REQUEST = 'CARD_PLAY_REQUEST',
   CARD_PLAY_RESPONSE = 'CARD_PLAY_RESPONSE',
-  PLAYER_QUERY_RESPONSE = 'PLAYER_QUERY_RESPONSE',
   UNIT_SELECT_REQUEST = 'UNIT_SELECT_REQUEST',
   DICE_SELECT_REQUEST = 'DICE_SELECT_REQUEST',
   GROUP_SELECT_REQUEST = 'GROUP_SELECT_REQUEST',
@@ -29,15 +30,26 @@ export enum BattleTypeKeys {
   OTHER_ACTION = '__any_other_action_type__',
 }
 
-export interface RequestActionWrapper<T extends Action> extends Action {
-  type: BattleTypeKeys.REQUEST_ACTION
-  action: T
+export interface RequestActionMeta {
+  type: 'request'
   unitId: string
 }
 
-export interface ResponseAction<T> extends Action {
-  type: T,
+export interface ResponseActionMeta {
+  type: 'response'
   unitId: string
+}
+
+export interface RequestAction<T, P = null, M extends RequestActionMeta = RequestActionMeta> extends Action {
+  type: T,
+  payload: P,
+  meta: M
+}
+
+export interface ResponseAction<T, P = null, M extends ResponseActionMeta = ResponseActionMeta> extends Action {
+  type: T
+  payload: P
+  meta: M
 }
 
 export interface PlayerIdAssignedAction extends Action {
@@ -51,110 +63,53 @@ export interface AssignDiceRequestAction extends Action {
   diceId: string
 }
 
-export interface AssignDiceResponseAction extends Action {
-  type: BattleTypeKeys.ASSIGN_DICE_RESPONSE,
-  assignmentId: string
-  cardId: PlayerCard
-}
-
 export interface RollDicesResult {
   [key: string]: number
 }
 
-export interface RollDicesResponseAction extends Action {
-  type: BattleTypeKeys.ROLL_DICES_RESPONSE
-  unitId: string
-  result: RollDicesResult
-}
-
-export interface RollDicesRequestAction extends Action {
-  type: BattleTypeKeys.ROLL_DICES_REQUEST
-}
-
-export interface SetUnitPhaseResponseAction extends ResponseAction<BattleTypeKeys.SET_UNIT_PHASE_RESPONSE> {
-  phase: BattlePhases
-}
-
-export interface SetUnitQueryResponseAction extends ResponseAction<BattleTypeKeys.SET_UNIT_QUERY_RESPONSE> {
-  query: PlayerQuery[]
-}
-
-export interface SetUnitGroupResponseAction extends ResponseAction<BattleTypeKeys.SET_UNIT_GROUP_RESPONSE> {
-  groupId: string
-}
-
-export interface KeepDicesRequestAction extends Action {
-  type: BattleTypeKeys.KEEP_DICES_REQUEST
-}
-
-export interface KeepDicesResponseAction extends Action {
-  type: BattleTypeKeys.KEEP_DICES_RESPONSE,
-  unitId: string
-}
-
-export interface AcceptAssignmentAction extends Action {
-  type: BattleTypeKeys.ACCEPT_ASSIGNMENT
-}
-
-export interface CardPlayRequestAction extends Action {
-  type: BattleTypeKeys.CARD_PLAY_REQUEST
-  cardId: PlayerCard
-}
-
-export interface PlayerQueryResponseAction extends Action {
-  type: BattleTypeKeys.PLAYER_QUERY_RESPONSE
-  query: PlayerQuery[]
-  unitId: string
-}
-
-export interface UnitSelectRequestAction extends Action {
-  type: BattleTypeKeys.UNIT_SELECT_REQUEST
-  targetUnitId: string
-}
-
-export interface DiceSelectRequestAction extends Action {
-  type: BattleTypeKeys.DICE_SELECT_REQUEST
-  diceId: string
-}
-
-export interface GroupSelectRequestAction extends Action {
-  type: BattleTypeKeys.GROUP_SELECT_REQUEST
-  targetGroupId: string
-}
-
-export interface CardPlayResponseAction extends ResponseAction<BattleTypeKeys.CARD_PLAY_RESPONSE> {
+export interface CardPlayPayload {
   phase: PlayCardPhases
   playerCard: PlayerCard
   select: PlayerQuerySelectTarget
 }
 
-export interface DamageUnitResponseAction extends ResponseAction<BattleTypeKeys.DAMAGE_UNIT_RESPONSE> {
-  dmgAmount: number
-}
-
-export interface KillUnitResponseAction extends ResponseAction<BattleTypeKeys.KILL_UNIT_RESPONSE> {
-}
-
-export interface MoveUnitToGroupResponseAction extends ResponseAction<BattleTypeKeys.MOVE_UNIT_TO_GROUP_RESPONSE> {
-  groupId: string
-}
-
-export interface TeleportPlayResponseAction extends ResponseAction<BattleTypeKeys.TELEPORT_PLAY_RESPONSE> {
+export interface TeleportPlayPayload {
   dtcaId: string
   groupId: string
 }
+
+export interface AssignDicePayload {
+  diceRollId: string
+  cardId: string
+}
+
+export type StartGameRequestAction =  RequestAction<BattleTypeKeys.START_GAME_REQUEST_ACTION>
+export type RollDicesRequestAction =  RequestAction<BattleTypeKeys.ROLL_DICES_REQUEST>
+export type KeepDicesRequestAction = RequestAction<BattleTypeKeys.KEEP_DICES_REQUEST>
+export type CardPlayRequestAction = RequestAction<BattleTypeKeys.CARD_PLAY_REQUEST, PlayerCard>
+export type UnitSelectRequestAction = RequestAction<BattleTypeKeys.UNIT_SELECT_REQUEST, string>
+export type DiceSelectRequestAction = RequestAction<BattleTypeKeys.DICE_SELECT_REQUEST, string>
+export type GroupSelectRequestAction = RequestAction<BattleTypeKeys.GROUP_SELECT_REQUEST, string>
+
+export type SetUnitDiceRollsResponseAction = ResponseAction<BattleTypeKeys.SET_UNIT_DICE_ROLLS, IdMap<DiceRollState>>
+export type SetUnitPhaseResponseAction = ResponseAction<BattleTypeKeys.SET_UNIT_PHASE_RESPONSE, BattlePhases>
+export type SetUnitQueryResponseAction = ResponseAction<BattleTypeKeys.SET_UNIT_QUERY_RESPONSE, PlayerQuery[]>
+export type SetUnitRollsResponseAction = ResponseAction<BattleTypeKeys.SET_UNIT_ROLLS_RESPONSE, number>
+export type SetUnitGroupResponseAction = ResponseAction<BattleTypeKeys.SET_UNIT_GROUP_RESPONSE, string>
+export type KeepDicesResponseAction = ResponseAction<BattleTypeKeys.KEEP_DICES_RESPONSE>
+export type CardPlayResponseAction = ResponseAction<BattleTypeKeys.CARD_PLAY_RESPONSE, CardPlayPayload>
+export type DamageUnitResponseAction = ResponseAction<BattleTypeKeys.DAMAGE_UNIT_RESPONSE, number>
+export type KillUnitResponseAction = ResponseAction<BattleTypeKeys.KILL_UNIT_RESPONSE>
+export type MoveUnitToGroupResponseAction = ResponseAction<BattleTypeKeys.MOVE_UNIT_TO_GROUP_RESPONSE, string>
+export type TeleportPlayResponseAction = ResponseAction<BattleTypeKeys.TELEPORT_PLAY_RESPONSE, TeleportPlayPayload>
+export type AssignDiceResponseAction = ResponseAction<BattleTypeKeys.ASSIGN_DICE_RESPONSE, AssignDicePayload>
 
 export interface OtherAction extends Action {
   type: BattleTypeKeys.OTHER_ACTION
 }
 
-export function request<T extends Action>(unitId: string, action: T): RequestActionWrapper<T> {
-  return {
-    action,
-    unitId,
-    type: BattleTypeKeys.REQUEST_ACTION,
-  }
-}
+export const responseMetaCreator = (unitId:string) => ({ unitId, type: 'response' })
+export const requestMetaCreator = (unitId:string) => ({ unitId, type: 'request' })
 
 export function playerIdAssigned(playerId: string): PlayerIdAssignedAction {
   return {
@@ -163,140 +118,30 @@ export function playerIdAssigned(playerId: string): PlayerIdAssignedAction {
   }
 }
 
-export function assignDiceResponse(assignmentId: string, cardId: PlayerCard): AssignDiceResponseAction {
-  return {
-    assignmentId,
-    cardId,
-    type: BattleTypeKeys.ASSIGN_DICE_RESPONSE,
-  }
-}
+export const startGameRequest = createAction(BattleTypeKeys.START_GAME_REQUEST_ACTION, () => null, requestMetaCreator)
+export const rollDicesRequest = createAction(BattleTypeKeys.ROLL_DICES_REQUEST, () => null, requestMetaCreator)
+export const keepDicesRequest = createAction(BattleTypeKeys.KEEP_DICES_REQUEST, () => null, requestMetaCreator)
+export const cardPlayRequest = createAction(BattleTypeKeys.CARD_PLAY_REQUEST, (unitId:string,cardId:string) => cardId, requestMetaCreator)
+export const unitSelectRequest = createAction(BattleTypeKeys.UNIT_SELECT_REQUEST, () => null, requestMetaCreator)
+export const diceSelectRequest = createAction(BattleTypeKeys.DICE_SELECT_REQUEST, (unitId:string,diceId:string) => diceId, requestMetaCreator)
+export const groupSelectRequest = createAction(BattleTypeKeys.GROUP_SELECT_REQUEST, (unitId:string, targetGroupId:string) => targetGroupId, requestMetaCreator)
 
-export function rollDicesRequest(): RollDicesRequestAction {
-  return {
-    type: BattleTypeKeys.ROLL_DICES_REQUEST,
-  }
-}
-
-export function rollDicesResponse(unitId: string, result: RollDicesResult): RollDicesResponseAction {
-  return {
-    unitId,
-    result,
-    type: BattleTypeKeys.ROLL_DICES_RESPONSE,
-  }
-}
-
-export function keepDicesRequest(): KeepDicesRequestAction {
-  return {
-    type: BattleTypeKeys.KEEP_DICES_REQUEST,
-  }
-}
-
-export function keepDicesResponse(unitId: string): KeepDicesResponseAction {
-  return {
-    unitId,
-    type: BattleTypeKeys.KEEP_DICES_RESPONSE,
-  }
-}
-
-export function acceptAssignment(): AcceptAssignmentAction {
-  return {
-    type: BattleTypeKeys.ACCEPT_ASSIGNMENT,
-  }
-}
-
-export function cardPlayRequest(cardId: PlayerCard): CardPlayRequestAction {
-  return {
-    cardId,
-    type: BattleTypeKeys.CARD_PLAY_REQUEST,
-  }
-}
-
-export function unitSelectRequest(targetUnitId: string): UnitSelectRequestAction {
-  return {
-    targetUnitId,
-    type: BattleTypeKeys.UNIT_SELECT_REQUEST,
-  }
-}
-
-export function diceSelectRequest(diceId: string): DiceSelectRequestAction {
-  return {
-    diceId,
-    type: BattleTypeKeys.DICE_SELECT_REQUEST,
-  }
-}
-
-export function groupSelectRequest(targetGroupId: string): GroupSelectRequestAction {
-  return {
-    targetGroupId,
-    type: BattleTypeKeys.GROUP_SELECT_REQUEST,
-  }
-}
-
-export function cardPlayResponse(unitId: string, playerCard: PlayerCard, phase: PlayCardPhases, select: PlayerQuerySelectTarget): CardPlayResponseAction {
-  return {
-    unitId,
+export const assignDiceResponse = createAction(BattleTypeKeys.ASSIGN_DICE_RESPONSE, (unitId:string, cardId:string, diceId:string) => ({ cardId, diceId }), responseMetaCreator)
+export const keepDicesResponse = createAction(BattleTypeKeys.KEEP_DICES_RESPONSE, () => null, responseMetaCreator)
+export const cardPlayResponse = createAction(BattleTypeKeys.CARD_PLAY_RESPONSE,
+  (unitId: string, playerCard: PlayerCard, phase: PlayCardPhases, select: PlayerQuerySelectTarget):CardPlayPayload => ({
     playerCard,
     phase,
     select,
-    type: BattleTypeKeys.CARD_PLAY_RESPONSE,
-  }
-}
-
-export function damageUnitResponse(unitId: string, dmgAmount: number): DamageUnitResponseAction {
-  return {
-    unitId,
-    dmgAmount,
-    type: BattleTypeKeys.DAMAGE_UNIT_RESPONSE,
-  }
-}
-
-export function killUnitResponse(unitId: string): KillUnitResponseAction {
-  return {
-    unitId,
-    type: BattleTypeKeys.KILL_UNIT_RESPONSE,
-  }
-}
-
-export function moveUnitToGroupResponse(unitId: string, groupId: string): MoveUnitToGroupResponseAction {
-  return {
-    unitId,
-    groupId,
-    type: BattleTypeKeys.MOVE_UNIT_TO_GROUP_RESPONSE,
-  }
-}
-
-export function teleportPlayResponse(unitId: string, groupId: string, dtcaId: string): TeleportPlayResponseAction {
-  return {
-    unitId,
-    dtcaId,
-    groupId,
-    type: BattleTypeKeys.TELEPORT_PLAY_RESPONSE,
-  }
-}
-
-export function setUnitPhaseResponse(unitId: string, phase: BattlePhases): SetUnitPhaseResponseAction {
-  return {
-    unitId,
-    phase,
-    type: BattleTypeKeys.SET_UNIT_PHASE_RESPONSE,
-  }
-}
-
-export function setUnitQueryResponse(unitId: string, query: PlayerQuery[]): SetUnitQueryResponseAction {
-  return {
-    unitId,
-    query,
-    type: BattleTypeKeys.SET_UNIT_QUERY_RESPONSE,
-  }
-}
-
-export function setUnitGroupResponse(unitId: string, groupId: string): SetUnitGroupResponseAction {
-  return {
-    unitId,
-    groupId,
-    type: BattleTypeKeys.SET_UNIT_GROUP_RESPONSE,
-  }
-}
+  }), responseMetaCreator)
+export const damageUnitResponse = createAction(BattleTypeKeys.DAMAGE_UNIT_RESPONSE, (unitId: string, dmgAmount: number) => dmgAmount, responseMetaCreator)
+export const killUnitResponse = createAction(BattleTypeKeys.KILL_UNIT_RESPONSE, () => null, responseMetaCreator)
+export const moveUnitToGroupResponse = createAction(BattleTypeKeys.MOVE_UNIT_TO_GROUP_RESPONSE, (unitId: string, groupId: string) => groupId, responseMetaCreator)
+export const setUnitDiceRollsResponse = createAction(BattleTypeKeys.SET_UNIT_DICE_ROLLS, (unitId: string, rolls: IdMap<DiceRollState>) => rolls, responseMetaCreator)
+export const setUnitPhaseResponse = createAction(BattleTypeKeys.SET_UNIT_PHASE_RESPONSE, (unitId: string, phase: BattlePhases) => phase, responseMetaCreator)
+export const setUnitQueryResponse = createAction(BattleTypeKeys.SET_UNIT_QUERY_RESPONSE,(unitId: string, query: PlayerQuery[]) => query, responseMetaCreator)
+export const setUnitRollsResponse = createAction(BattleTypeKeys.SET_UNIT_ROLLS_RESPONSE,(unitId: string, rolls: number) => rolls, responseMetaCreator)
+export const setUnitGroupResponse = createAction(BattleTypeKeys.SET_UNIT_GROUP_RESPONSE, (unitId: string, groupId: string) => groupId, responseMetaCreator)
 
 
 export type BattleActionRequestTypes = RollDicesRequestAction
@@ -307,12 +152,11 @@ export type BattleActionRequestTypes = RollDicesRequestAction
   | UnitSelectRequestAction
 
 export type BattleActionTypes = AssignDiceRequestAction
-  | RollDicesResponseAction
   | KeepDicesResponseAction
+  | SetUnitDiceRollsResponseAction
   | SetUnitPhaseResponseAction
   | SetUnitQueryResponseAction
-  | AcceptAssignmentAction
-  | PlayerQueryResponseAction
+  | SetUnitRollsResponseAction
   | AssignDiceResponseAction
   | DamageUnitResponseAction
   | KillUnitResponseAction
