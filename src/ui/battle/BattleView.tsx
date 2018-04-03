@@ -5,22 +5,19 @@ import Dice from '../common/Dice'
 import Drawer, { DrawerAction } from '../common/Drawer'
 import { Card } from '../common/Card'
 import { UnitComponent } from '../common/UnitComponent'
-import { BattleState, BattleViewState, PlayerCard, PlayerQuery, PlayerQuerySelectTarget } from './battle-reducer'
+import { BattleState, BattleViewState, PlayerCard, PlayerQuerySelectTarget } from './battle-reducer'
 import {
   keepDicesRequest,
   cardPlayRequest, playerIdAssigned, setActiveUnitId, rollDicesRequest,
   unitSelectRequest, groupSelectRequest, diceSelectRequest,
 } from './battle-actions'
 import {
-  cardDrawerActionsSelector, diceDrawerActionsSelector, ActiveUnitCard, ActiveUnitDice,
-  BattleSelectorProps, unitQuerySelector, activeUnitCardsSelector,
-  activeUnitDicesSelector,
-  activeTurnCardsSelector,
+  EnhancedGroup,
+  ActiveUnitDice,
+  BattleSelectorProps,
   enhancedGroupsSelector, EnhancedUnit,
 } from './battle-selectors'
 import { checkCondition } from './battle-utils'
-import { TurnMarker } from '../common/TurnMarker'
-import { EnhancedGroup } from './battle-selectors'
 
 const diceStyle = {
   margin: '2px',
@@ -36,13 +33,7 @@ const unitStyle = {
 
 export interface BattleViewStateProps {
   activeUnitId: string
-  activeUnitQuery: PlayerQuery[]
-  diceDrawerActions: DrawerAction[]
-  cardDrawerActions: DrawerAction[]
   groupsWithUnits: EnhancedGroup[]
-  unitDices: ActiveUnitDice[]
-  unitCards: ActiveUnitCard[]
-  activeTurnCards: ActiveUnitCard[]
 }
 
 export interface BattleViewDispatchProps {
@@ -123,7 +114,7 @@ class BattleView extends React.Component<BattleViewProps, any> {
   }
 
   render() {
-    const activeUnit = this.getActiveUnit(this.props);
+    const activeUnit = this.getActiveUnit(this.props)
 
     return <div>
       {this.props.groupsWithUnits.map(group => <Drawer
@@ -133,7 +124,7 @@ class BattleView extends React.Component<BattleViewProps, any> {
             id: 'select',
             name: 'Select',
             disabled: false,
-            visible: checkCondition(PlayerQuerySelectTarget.GROUP, group, this.props.activeUnitQuery),
+            visible: activeUnit && checkCondition(PlayerQuerySelectTarget.GROUP, group, activeUnit.query),
           },
         ]}
         onAction={this.onGroupAction(group.id)}
@@ -144,7 +135,7 @@ class BattleView extends React.Component<BattleViewProps, any> {
             key={unit.id}
             unit={unit}
             debug={true}
-            showSelectButton={checkCondition(PlayerQuerySelectTarget.UNIT, unit, this.props.activeUnitQuery)}
+            showSelectButton={activeUnit && checkCondition(PlayerQuerySelectTarget.UNIT, unit, activeUnit.query)}
             onSelectButton={this.onUnitSelected}
             onSelect={this.onActiveUnitSelected}
             style={unitStyle}
@@ -153,7 +144,18 @@ class BattleView extends React.Component<BattleViewProps, any> {
       {activeUnit && (
         <Drawer
           key={'dice-drawer'}
-          actions={this.props.diceDrawerActions}
+          actions={[
+            {
+              id: 'roll',
+              name: `Roll(${activeUnit.rolls})`,
+              visible: checkCondition(PlayerQuerySelectTarget.DICE_ACTION, 'roll', activeUnit.query),
+            },
+            {
+              id: 'keep',
+              name: 'Keep',
+              visible: checkCondition(PlayerQuerySelectTarget.DICE_ACTION, 'keep', activeUnit.query),
+            }].map(action => ({ ...action, visible: checkCondition(PlayerQuerySelectTarget.DICE_ACTION, action, activeUnit.query) }))
+          }
           onAction={this.onDiceAction}
           style={{ backgroundColor: '#85929E' }}
         >
@@ -162,7 +164,7 @@ class BattleView extends React.Component<BattleViewProps, any> {
               key={dice.id}
               face={dice.rollResult}
               style={diceStyle}
-              showHighlight={checkCondition(PlayerQuerySelectTarget.DICE, dice, this.props.activeUnitQuery)}
+              showHighlight={checkCondition(PlayerQuerySelectTarget.DICE, dice, activeUnit.query)}
               selected={false}
               onClick={this.onDiceClick(dice as any)}
               description={JSON.stringify(dice, null, 2)}
@@ -170,9 +172,15 @@ class BattleView extends React.Component<BattleViewProps, any> {
           ))}
         </Drawer>
       )}
-      <Drawer
+      {activeUnit && <Drawer
         key={'card-drawer'}
-        actions={this.props.cardDrawerActions}
+        actions={[
+          {
+            id: 'accept-assignment',
+            name: 'Accept',
+            disabled: activeUnit.rolls === 0,
+          },
+        ]}
         onAction={this.onCardAction}
         style={{ backgroundColor: '#85929E' }}
       >
@@ -184,11 +192,11 @@ class BattleView extends React.Component<BattleViewProps, any> {
           diceSlot={card.require}
           diceSlotEmpty={true}
           showSlot={true}
-          showPlayButton={checkCondition(PlayerQuerySelectTarget.CARD, card, this.props.activeUnitQuery)}
+          showPlayButton={checkCondition(PlayerQuerySelectTarget.CARD, card, activeUnit.query)}
           onDiceSlotClick={this.onCardSlotClick}
           onClick={this.onCardClick}
           description={JSON.stringify(card, null, 2)}/>)}
-      </Drawer>
+      </Drawer>}
       {/*<Drawer
         key={'turn-unit-card-drawer'}
         actions={[]}
@@ -220,17 +228,10 @@ const mapStateToProps = function (state: any, ownProps: BattleViewContainerProps
   const battleState: BattleState = ownProps.battleStateSelector(state)
   const battleViewState: BattleViewState = ownProps.battleViewStateSelector(state)
   const unitId = battleViewState.activeUnitId
-  const props: BattleSelectorProps = { unitId }
   return {
     activeUnitId: unitId,
-    activeUnitQuery: unitQuerySelector(battleState, props),
     groupsWithUnits: enhancedGroupsSelector(battleState),
     // turns: turnsSelector(battleState, {activeUnitId}),
-    diceDrawerActions: diceDrawerActionsSelector(battleState, props),
-    cardDrawerActions: cardDrawerActionsSelector(battleState, props),
-    unitCards: activeUnitCardsSelector(battleState, props),
-    unitDices: activeUnitDicesSelector(battleState, props),
-    activeTurnCards: activeTurnCardsSelector(battleState, props),
   }
 }
 

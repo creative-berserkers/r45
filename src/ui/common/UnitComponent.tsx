@@ -1,9 +1,9 @@
 import * as React from 'react'
 import Button from './Button'
-import { Unit } from '../battle/battle-selectors'
+import { EnhancedUnit } from '../battle/battle-selectors'
 
 export interface UnitProps {
-  unit: Unit
+  unit: EnhancedUnit
   debug?: boolean,
   showSelectButton?: boolean
   onSelect: (id: string) => void
@@ -18,6 +18,7 @@ const baseStyle: React.CSSProperties = {
   transition: 'all 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms',
   boxSizing: 'border-box',
   fontFamily: 'Roboto, sans-serif',
+  fontSize: '0.6em',
   WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
   boxShadow: 'rgba(0, 0, 0, 0.12) 0px 1px 6px, rgba(0, 0, 0, 0.12) 0px 1px 4px',
   borderRadius: '2px',
