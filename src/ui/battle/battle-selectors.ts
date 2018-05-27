@@ -4,7 +4,7 @@ import {
   BattleState,
   PlayerCard, UnitState, GroupState, CardState,
 } from './battle-reducer'
-import { IdMap,  mapValues } from './battle-utils'
+import { filterIdMap, IdMap, mapValues } from './battle-utils'
 
 export interface BattleSelectorProps {
   unitId: string
@@ -20,13 +20,8 @@ export interface EnhancedDiceRoll {
 export interface EnhancedUnit {
   id: string
   name: string
-  groupId: string
-  playerId: string
-  baseHealth: number
-  damage: number
   rolls: number
   query: PlayerQuery[]
-  assignedCardsIds: string[]
   diceRolls: EnhancedDiceRoll[]
   health: number
   cards: CardState[]
@@ -58,21 +53,21 @@ export type BattleStateSelector = (state: any) => BattleState
 export const cardsSelector = (state: BattleState) => state.cards
 export const groupsSelector = (state: BattleState) => state.groups
 export const unitsSelector = (state: BattleState) => state.units
-export const enhancedUnitsSelector = createSelector<BattleState, IdMap<UnitState>, IdMap<CardState>, EnhancedUnit[]>(
+
+export const enhancedGroupsSelector = createSelector<BattleState, IdMap<GroupState>, IdMap<UnitState>, IdMap<CardState>, EnhancedGroup[]>(
+  groupsSelector,
   unitsSelector,
   cardsSelector,
-  (units, cards): EnhancedUnit[] => mapValues<UnitState, EnhancedUnit>(units, (unitId, unit) => ({
-    ...unit,
-    health: unit.baseHealth - unit.damage,
-    cards: unit.assignedCardsIds.map(cardId => cards[cardId]),
-    diceRolls: mapValues(unit.diceRolls),
-  })),
-)
-export const enhancedGroupsSelector = createSelector<BattleState, IdMap<GroupState>, EnhancedUnit[], EnhancedGroup[]>(
-  groupsSelector,
-  enhancedUnitsSelector,
-  (groups, units) => mapValues<GroupState, EnhancedGroup>(groups, (groupId, group) => ({
+  (groups, units, cards) => mapValues<GroupState, EnhancedGroup>(groups, group => ({
     ...group,
-    units: units.filter(unit => unit.groupId === groupId),
+    units: mapValues<UnitState, EnhancedUnit>(filterIdMap<UnitState>(units, unit => unit.groupId === group.id), unit => ({
+      id: unit.id,
+      name: unit.name,
+      rolls: unit.rolls,
+      query: unit.query,
+      health: unit.baseHealth - unit.damage,
+      cards: unit.assignedCardsIds.map(cardId => cards[cardId]),
+      diceRolls: mapValues(unit.diceRolls),
+    })),
   })),
 )

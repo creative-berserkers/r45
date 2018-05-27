@@ -4,7 +4,7 @@ import * as React from 'react'
 import { render } from 'react-dom'
 import createSagaMiddleware from 'redux-saga'
 import battleSaga from '../ui/battle/battle-saga'
-import { createStore, applyMiddleware, compose } from 'redux'
+import { createStore, applyMiddleware, compose, Store } from 'redux'
 import rootReducer, { RootState } from '../ui/main/root-reducer'
 
 injectTapEventPlugin()
@@ -31,24 +31,15 @@ const renderApp = () => {
 
 renderApp()
 
-const rootElement = document.getElementById('mount')
-
 if ((module as any).hot) {
 
-  const renderError = (error: any) => {
-    const RedBox = require('redbox-react')
-    render(
-      <RedBox error={error}/>,
-      rootElement,
-    )
-  }
 
   const renderAll = () => {
-    try {
-      renderApp()
-    } catch (error) {
-      renderError(error)
-    }
+    // try {
+    renderApp()
+    // } catch (error) {
+    //  renderError(error)
+    // }
   }
   (module as any).hot.accept('../ui/battle/BattleView', renderAll)
 }

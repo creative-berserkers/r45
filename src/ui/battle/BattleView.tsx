@@ -48,6 +48,7 @@ export interface BattleViewDispatchProps {
 }
 
 export interface BattleViewContainerProps {
+  onConnect: () => void
   battleStateSelector: (state: any) => BattleState
   battleViewStateSelector: (state: any) => BattleViewState
 }
@@ -117,6 +118,9 @@ class BattleView extends React.Component<BattleViewProps, any> {
     const activeUnit = this.getActiveUnit(this.props)
 
     return <div>
+      <div>
+        <button onClick={this.props.onConnect}>Connect</button>
+      </div>
       {this.props.groupsWithUnits.map(group => <Drawer
         key={group.id}
         actions={[

@@ -45,13 +45,13 @@ export function getUniqueId(namespace: string): string {
 }
 
 export interface MapValuesFunc<T, R> {
-  (key: string, value: T) : R
+  (value: T) : R
 }
 
-export const mapValuesIdentity: MapValuesFunc<any,any> = (key: string, inp: any) => inp
+export const mapValuesIdentity: MapValuesFunc<any,any> = (inp: any) => inp
 
 export function mapValues<T,R>(obj: { [key: string]: T }, func: MapValuesFunc<T,R> = mapValuesIdentity): R[] {
-  return Object.keys(obj).map((key:string) => func(key, obj[key]))
+  return Object.keys(obj).map((key:string) => func(obj[key]))
 }
 
 export interface FilterIdMapFunction<T> {
@@ -59,7 +59,7 @@ export interface FilterIdMapFunction<T> {
   (value: T): boolean
 }
 
-export function filterIdMap<T>(map: IdMap<T>, filterFunc: FilterIdMapFunction<T>) {
+export function filterIdMap<T>(map: IdMap<T>, filterFunc: FilterIdMapFunction<T>) : IdMap<T> {
   return Object.keys(map).reduce((acc: IdMap<T>, mapKey: string): IdMap<T> => {
     if (filterFunc(map[mapKey])) {
       acc[mapKey] = map[mapKey]
